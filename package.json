@@ -1,13 +1,17 @@
 {
-  "type": "module",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw"
   },
   "dependencies": {
+    "@prisma/client": "^4.10.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-typescript": "^11.0.0",
     "rollup": "^3.13.0",
     "tslib": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.13.0",
+    "prisma": "^4.10.1"
   }
 }
