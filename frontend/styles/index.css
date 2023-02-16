@@ -1,3 +1,57 @@
-h1 {
-    color: green;
+input[type=text], select {
+  width: 150pt;
+  height: 5pt;
+  padding: 12px 5px;
+  margin: 1px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
+
+.input-with-text {
+  padding: 5px;
+}
+
+.contents {
+    margin-top: 10%;
+    margin-bottom: 10%;
+    margin-left: 30%;
+    margin-right: 30%;
+    text-align: center;
+    padding: 10px;
+    border-radius: 15px 15px 15px 15px;
+    background-color: white;
+}
+
+.button {
+    transition-duration: 0.4s;
+    border-radius: 15px 15px 15px 15px;
+    border-color:#c00;
+    height: 40px;
+    width: 80px;
+    padding: 5px;
+    margin: 5px;
+  }
+  
+  .button:hover {
+    background-color: #c00; /* Green */
+    color: white;
+    border-radius: 15px 15px 15px 15px;
+  }
+
+  .button:active {
+    border-radius: 15px 15px 15px 15px;
+  }
+
+  .button:focus {
+    border-radius: 15px 15px 15px 15px;
+  }
+
+  form {
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  body {
+    background-color: #f2f2f2;
+  }
