@@ -1,0 +1,13 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -cw"
+  },
+  "dependencies": {
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "rollup": "^3.13.0",
+    "tslib": "^2.5.0"
+  }
+}
