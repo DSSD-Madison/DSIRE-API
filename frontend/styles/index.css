@@ -48,10 +48,13 @@ input[type=text], select {
     border-radius: 15px 15px 15px 15px;
   }
 
-  form {
-    font-family: 'Open Sans', sans-serif;
-  }
+form {
+  font-family: 'Open Sans', sans-serif;
+}
 
-  body {
-    background-color: #f2f2f2;
-  }
+body {
+  background-color: #f2f2f2;
+}
+
+
+

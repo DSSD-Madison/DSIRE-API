@@ -12,7 +12,7 @@
             <img src="./images/dsire.png">
             <img src="./images/ncce.png">
         </div>
-        <form id="signupform">
+        <form id="signupform" action="https://dogvcluxdi.execute-api.us-east-1.amazonaws.com/main/TestingHandler" method="POST">
             <div class="input-with-text">
                 <label for="username">Username</label><br>
                 <input type="text" id="username" name="username"><br>
@@ -25,7 +25,8 @@
                 <label for="org">Organization</label><br>
                 <input type="text" id="org" name="org"><br>
             </div>
-            <button class="button" onclick="submitForm()">Submit</button>
+            <button class="button">Submit</button>
+            
         </form>
     </div>
 </body>
