@@ -18,8 +18,7 @@ for view in dist/frontend/*.html; do
 done
 
 for stage in "${STAGES[@]}"; do
-    # TODO check if need to be filled by content, not packages
-    if [ "${stage}" == "${GITHUB_REF_NAME}" ] || ! aws s3 ls s3://"${BUCKET_PREFIX}"-packages | grep "${stage}" || [ "${FORCE}" == "true" ]; then
+    if [ "${stage}" == "${GITHUB_REF_NAME}" ] || ! aws s3 ls s3://"${BUCKET_PREFIX}"-hosting-"${stage}" | grep index.html || [ "${FORCE}" == "true" ]; then
         echo "Stage ${stage} modified or unfilled; filling with content from ${GITHUB_REF_NAME}"
         [ "${FORCE}" == "true" ] && echo "(forced)"
         aws s3 sync dist/frontend s3://"${BUCKET_PREFIX}"-hosting-"${stage}"
