@@ -260,3 +260,9 @@ Outputs:
   TestingApiUrl:
     Description: URL for querying the DSIRE API, testing version
     Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${TestingStage}"
+
+  ApiUrl:
+    Description: Root URL for querying the DSIRE API (for pragmatic access/use)
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: ApiUrl

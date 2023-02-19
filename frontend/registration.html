@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link type="text/css" rel="stylesheeet" href="styles/registration.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap">
+</head>
+
+<body>
+
+    <form method="post" action="{% API_URL %}/register">
+
+        <label for="name">Name</label>
+        <input name="name" type="text" required>
+
+        <label for="email">Email</label>
+        <input name="email" type="text" required>
+
+        <label for="org">Organization</label>
+        <input name="org" type="text">
+
+        <input type="submit" value="Submit request">
+    </form>
+</body>
