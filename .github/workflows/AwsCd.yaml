@@ -38,13 +38,27 @@ jobs:
         run: npm ci package.json
 
       - name: Build & bundle for production
-        run: NODE_ENV=production npm run build --if-present
+        env:
+          NODE_ENV: production
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
+        run: npm run build
         if: github.ref_name == 'main'
+
       - name: Build & bundle for staging
-        run: NODE_ENV=development npm run build --if-present
+        env:
+          NODE_ENV: production
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
+        run: npm run build
         if: github.ref_name == 'staging'
+
       - name: Build & bundle for testing
-        run: NODE_ENV=development npm run build --if-present
+        env:
+          NODE_ENV: development
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
+        run: npm run build
         if: github.ref_name == 'testing'
 
       - name: Zip API package
@@ -78,7 +92,10 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
       - name: Sync package with S3
-        run: chmod +x .github/sync-packages.sh; GITHUB_REF_NAME=${{ github.ref_name }} FORCE=${{ inputs.forceSync }} .github/sync-packages.sh
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          FORCE: ${{ inputs.forceSync }}
+        run: chmod +x .github/sync-packages.sh; .github/sync-packages.sh
 
   cloudformation:
     name: Deploy CloudFormation stacks
@@ -122,12 +139,41 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
       - name: Get root API URL (for rendering {% API_URL %})
-        run: echo "API_URL=$(aws cloudformation --region us-east-1 list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
+        run: echo "API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
       - name: Render and sync content with S3
-        run: chmod +x .github/render-sync-content.sh; GITHUB_REF_NAME=${{ github.ref_name }} API_URL=$API_URL FORCE=${{ inputs.forceSync }} .github/render-sync-content.sh
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          FORCE: ${{ inputs.forceSync }}
+          API_URL: $API_URL
+        run: chmod +x .github/render-sync-content.sh; .github/render-sync-content.sh
 
       - name: Upload content as artifact
         uses: actions/upload-artifact@v3
         with:
           name: frontend-${{ github.ref_name }}
           path: dist/frontend/*
+
+  sync-environment-lambda:
+    name: Sync secrets with Lambda
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs: cloudformation
+
+    steps:
+      - name: Checkout ${{ github.ref_name }}
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+      - name: Sync all environment secrets with Lambda handlers
+        env:
+          APPROVER_EMAIL_MAIN: ${{ secrets.APPROVER_EMAIL_MAIN }}
+          APPROVER_EMAIL_STAGING: ${{ secrets.APPROVER_EMAIL_STAGING }}
+          APPROVER_EMAIL_TESTING: ${{ secrets.APPROVER_EMAIL_TESTING }}
+          IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: chmod +x .github/sync-env.sh; .github/sync-env.sh
