@@ -2,11 +2,31 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Infrastructure for the DSIRE API ecosystem"
 
 
+
 Parameters:
 
   CdStackName:
     Type: String
     Default: GitHubActionsCd
+
+  VpcId:
+    Type: String
+    Default: vpc-02aebef18a7738b6a
+
+  SecurityGroupId:
+    Type: String
+    Default: sg-034ea701a79012c14
+
+  SubnetIds:
+    Type: CommaDelimitedList
+    Default: "subnet-0e968dd68b1557a24"
+      # TODO: we want to run in all AZs?
+      # - subnet-00ff385195c1dbdb5
+      # - subnet-02563ccf50bd2aba3
+      # - subnet-0b828c335bdc547f1
+      # - subnet-03903f9e5abb3a1f3
+      # - subnet-0962f733fc73508f8
+
 
 
 Resources:
@@ -139,6 +159,7 @@ Resources:
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: DsireApiHandlers
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -146,6 +167,10 @@ Resources:
           Action: sts:AssumeRole
           Principal:
             Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        # TODO: wildcard
+        - arn:aws:iam::aws:policy/AmazonSESFullAccess
       Policies:
         - PolicyDocument:
             Version: "2012-10-17"
@@ -158,14 +183,7 @@ Resources:
                   - ec2:DeleteNetworkInterface
                 # TODO: wildcard
                 Resource: "*"
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutEvents
-                # TODO: wildcard (only allow logging in own logs /aws/lambda/ThisFunction:*)
-                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
-          PolicyName: DsireApiHandlersCloudLog
+          PolicyName: AllowVpcNetworking
 
 
   MainHandler:
@@ -179,22 +197,15 @@ Resources:
           Fn::ImportValue: !Sub
                              - ${CD_STACK}-PackageBucketArn
                              - CD_STACK: !Ref CdStackName
-        S3Key: main-api.zip
+        S3Key: api-main.zip
       PackageType: Zip
       Runtime: nodejs18.x
       Handler: index.handler
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SecurityGroupIds:
-          - sg-034ea701a79012c14
-        # TODO: we want to run in all AZs?
-        SubnetIds:
-          - subnet-0e968dd68b1557a24
-          - subnet-00ff385195c1dbdb5
-          - subnet-02563ccf50bd2aba3
-          - subnet-0b828c335bdc547f1
-          - subnet-03903f9e5abb3a1f3
-          - subnet-0962f733fc73508f8
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
   StagingHandler:
     Type: AWS::Lambda::Function
     DependsOn: LambdaRole
@@ -206,21 +217,15 @@ Resources:
           Fn::ImportValue: !Sub
                              - ${CD_STACK}-PackageBucketArn
                              - CD_STACK: !Ref CdStackName
-        S3Key: staging-api.zip
+        S3Key: api-staging.zip
       PackageType: Zip
       Runtime: nodejs18.x
       Handler: index.handler
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SecurityGroupIds:
-          - sg-034ea701a79012c14
-        SubnetIds:
-          - subnet-0e968dd68b1557a24
-          - subnet-00ff385195c1dbdb5
-          - subnet-02563ccf50bd2aba3
-          - subnet-0b828c335bdc547f1
-          - subnet-03903f9e5abb3a1f3
-          - subnet-0962f733fc73508f8
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
   TestingHandler:
     Type: AWS::Lambda::Function
     DependsOn: LambdaRole
@@ -232,21 +237,16 @@ Resources:
           Fn::ImportValue: !Sub
                              - ${CD_STACK}-PackageBucketArn
                              - CD_STACK: !Ref CdStackName
-        S3Key: testing-api.zip
+        S3Key: api-testing.zip
       PackageType: Zip
       Runtime: nodejs18.x
       Handler: index.handler
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SecurityGroupIds:
-          - sg-034ea701a79012c14
-        SubnetIds:
-          - subnet-0e968dd68b1557a24
-          - subnet-00ff385195c1dbdb5
-          - subnet-02563ccf50bd2aba3
-          - subnet-0b828c335bdc547f1
-          - subnet-03903f9e5abb3a1f3
-          - subnet-0962f733fc73508f8
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+
 
 
 Outputs:

@@ -86,6 +86,7 @@ Resources:
       # TODO: wildcard (replace managed allow-all policies with minimal customer policies, as above)
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
         - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
         - arn:aws:iam::aws:policy/AWSLambda_FullAccess
