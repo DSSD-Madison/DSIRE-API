@@ -1,13 +1,21 @@
 {
-  "type": "module",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw"
   },
   "dependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
+    "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-typescript": "^11.0.0",
+    "nodemailer": "^6.9.1",
     "rollup": "^3.13.0",
     "tslib": "^2.5.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/types": "^3.272.0",
+    "@types/aws-lambda": "^8.10.110",
+    "@types/node": "^18.14.0",
+    "@types/nodemailer": "^6.4.7"
   }
 }

@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "target": "ES6",
+
+        "forceConsistentCasingInFileNames": true,
+        // "noImplicitAny": true
+    }
+}

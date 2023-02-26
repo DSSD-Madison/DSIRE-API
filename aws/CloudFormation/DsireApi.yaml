@@ -248,6 +248,27 @@ Resources:
         SubnetIds: !Ref SubnetIds
 
 
+  SesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      SubnetIds: !Ref SubnetIds
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: True
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.email-smtp"
+
+  SesIngressTraffic:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SecurityGroupId
+      SourceSecurityGroupId: !Ref SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 587
+      ToPort: 587
+
+
 
 Outputs:
 
