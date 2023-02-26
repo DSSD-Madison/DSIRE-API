@@ -142,7 +142,6 @@ jobs:
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
           FORCE: ${{ inputs.forceSync }}
-          API_URL: $API_URL
         run: chmod +x .github/render-sync-content.sh; .github/render-sync-content.sh
 
       - name: Upload content as artifact
@@ -155,7 +154,9 @@ jobs:
     name: Sync secrets with Lambda
     runs-on: ubuntu-latest
     environment: AWS_Development
-    needs: cloudformation
+    needs:
+      - cloudformation
+      - deploy-packages-lambda
 
     steps:
       - name: Checkout ${{ github.ref_name }}

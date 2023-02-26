@@ -6,26 +6,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link type="text/css" rel="stylesheeet" href="styles/registration.css">
+    <link type="text/css" rel="stylesheet" href="styles/registration.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap">
 </head>
 
+
 <body>
+    <div class="contents">
 
-    <form method="post" action="{% API_URL %}/register">
+        <div>
+            <img src="./images/dsire.png">
+            <img src="./images/ncce.png">
+        </div>
 
-        <label for="name">Name</label>
-        <input name="name" type="text" required>
+        <form id="signupform" action="{% API_URL %}/register" method="post">
+            <div class="input-with-text">
+                <label for="name">Username</label><br>
+                <input type="text" id="username" name="name"><br>
+            </div>
+            <div class="input-with-text">
+                <label for="email">Email</label><br>
+                <input type="text" id="email" name="email"><br>
+            </div>
+            <div class="input-with-text">
+                <label for="org">Organization</label><br>
+                <input type="text" id="org" name="org"><br>
+            </div>
+            <button class="button">Submit</button>
+        </form>
 
-        <label for="email">Email</label>
-        <input name="email" type="text" required>
-
-        <label for="org">Organization</label>
-        <input name="org" type="text">
-
-        <input type="submit" value="Submit request">
-    </form>
+    </div>
 </body>
