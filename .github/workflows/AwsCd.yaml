@@ -155,7 +155,9 @@ jobs:
     name: Sync secrets with Lambda
     runs-on: ubuntu-latest
     environment: AWS_Development
-    needs: cloudformation
+    needs:
+      - cloudformation
+      - deploy-packages-lambda
 
     steps:
       - name: Checkout ${{ github.ref_name }}
