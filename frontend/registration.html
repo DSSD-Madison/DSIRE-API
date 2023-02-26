@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link type="text/css" rel="stylesheeet" href="styles/registration.css">
+    <link type="text/css" rel="stylesheet" href="styles/registration.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +22,7 @@
             <img src="./images/ncce.png">
         </div>
 
-        <form id="signupform" action="{% API_URL %}/register" method="POST">
+        <form id="signupform" action="{% API_URL %}/register" method="post">
             <div class="input-with-text">
                 <label for="name">Username</label><br>
                 <input type="text" id="username" name="name"><br>
