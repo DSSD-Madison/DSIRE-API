@@ -10,7 +10,7 @@ export default (token) => {`
 				location.href = link.value;
 			}
 			</script>
-			<p style="font-family:arial">If you didn't make this request, please ignore this email. No further action is required.<p>
+			<p style="font-family:arial">If you didn't make this request, please ignore this email; no further action is required.<p>
 		</body>
 	</html>
 `}
