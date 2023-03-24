@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <script src="scripts/index.js" defer type="text/javascript"></script>
+
     <link type="text/css" rel="stylesheet" href="styles/registration.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,20 +24,21 @@
             <img src="./images/ncce.png">
         </div>
 
-        <form id="signupform" action="{% API_URL %}/register" method="post">
+        <!--<form id="signupform" action="{% API_URL %}/register" method="post">-->
+        <form id="registrationform"></form>
             <div class="input-with-text">
                 <label for="name">Username</label><br>
-                <input type="text" id="username" name="name"><br>
+                <input type="text" id="username" name="name" data-rules="required"><br>
             </div>
             <div class="input-with-text">
                 <label for="email">Email</label><br>
-                <input type="text" id="email" name="email"><br>
+                <input type="text" id="email" name="email" data-rules="required|email"><br>
             </div>
             <div class="input-with-text">
                 <label for="org">Organization</label><br>
-                <input type="text" id="org" name="org"><br>
+                <input type="text" id="org" name="org" data-rules="required"><br>
             </div>
-            <button class="button">Submit</button>
+            <button id="submitbutton" class="button">Submit</button>
         </form>
 
     </div>
