@@ -186,9 +186,25 @@ Resources:
           PolicyName: AllowVpcNetworking
 
 
+  DependencyLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleArchitectures: ["x86_64"]
+      CompatibleRuntimes: ["nodejs18.x"]
+      Content:
+        S3Bucket:
+          Fn::ImportValue: !Sub
+                            - ${CD_STACK}-PackageBucketArn
+                            - CD_STACK: !Ref CdStackName
+        S3Key: api-dependencies.zip
+      Description: "node_modules for the DSIRE API"
+      LayerName: "HandlerDependencies"
+
   MainHandler:
     Type: AWS::Lambda::Function
-    DependsOn: LambdaRole
+    DependsOn:
+      - DependencyLayer
+      - LambdaRole
     Properties:
       FunctionName: MainHandler
       Description: Handles all backend functionality
@@ -200,7 +216,9 @@ Resources:
         S3Key: api-main.zip
       PackageType: Zip
       Runtime: nodejs18.x
+      Layers: [!Ref DependencyLayer]
       Handler: index.handler
+      Timeout: 10
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -208,7 +226,9 @@ Resources:
         SubnetIds: !Ref SubnetIds
   StagingHandler:
     Type: AWS::Lambda::Function
-    DependsOn: LambdaRole
+    DependsOn:
+      - DependencyLayer
+      - LambdaRole
     Properties:
       FunctionName: StagingHandler
       Description: Handles all backend functionality
@@ -220,7 +240,9 @@ Resources:
         S3Key: api-staging.zip
       PackageType: Zip
       Runtime: nodejs18.x
+      Layers: [!Ref DependencyLayer]
       Handler: index.handler
+      Timeout: 10
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -228,7 +250,9 @@ Resources:
         SubnetIds: !Ref SubnetIds
   TestingHandler:
     Type: AWS::Lambda::Function
-    DependsOn: LambdaRole
+    DependsOn:
+      - DependencyLayer
+      - LambdaRole
     Properties:
       FunctionName: TestingHandler
       Description: Handles all backend functionality
@@ -240,7 +264,9 @@ Resources:
         S3Key: api-testing.zip
       PackageType: Zip
       Runtime: nodejs18.x
+      Layers: [!Ref DependencyLayer]
       Handler: index.handler
+      Timeout: 10
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SecurityGroupIds:

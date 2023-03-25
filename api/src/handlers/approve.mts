@@ -1,8 +1,8 @@
 import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda"
 
-import accessTemplate from "../email-templates/access"
-import mailTransport from "../mailTransport"
-import {checkJWS, decryptJWE, mintJWE, mintJWS} from "../crypto"
+import accessTemplate from "../email-templates/access.mjs"
+import mailTransport from "../mailTransport.mjs"
+import {checkJWS, decryptJWE, mintJWE, mintJWS} from "../crypto.mjs"
 
 export default async function approve(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
