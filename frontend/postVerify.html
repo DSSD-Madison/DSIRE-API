@@ -1,10 +1,14 @@
 <!DOCTYPE html>
+<html lang="en">
 
 
 <head>
-    <meta content="text/html; charset=utf-8" http-equiv="Content-type">
-    <title>API Documentation</title>
-    <link type="text/css" rel="stylesheet" href="styles/approve.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link type="text/css" rel="stylesheet" href="styles/postVerify.css">
+
+    <title>User Approved—DSIRE</title>
 </head>
 
 <body>
@@ -12,13 +16,11 @@
         <img src="./images/dsire.png">
         <img src="./images/ncce.png">
     </div>
-    <br/>
-    
-    
+    <br>
     <div class="message-bubble">
         <img src="./images/checkmark.png" class="check">
-        <h1 class="heading">Confirmed</h1>
+        <h1 class="heading">Verified</h1>
         <p class="body">You have successfully verified your email.</p>
     </div>
-    
+    <span id="stage">{% STAGE %}</span>
 </body>

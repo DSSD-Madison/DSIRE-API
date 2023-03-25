@@ -33,7 +33,7 @@ input[type=text], select {
     padding: 5px;
     margin: 5px;
   }
-  
+
   .button:hover {
     background-color: #c00; /* Green */
     color: white;
@@ -57,4 +57,12 @@ body {
 }
 
 
-
+#stage {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 16px;
+  font-family: monospace;
+  color: grey;
+  font-size: 10px;
+}

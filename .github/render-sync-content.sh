@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Templating: replace...
-# {% API_URL %} with $API_URL/$GITHUB_REF_NAME
+# {% STAGE %} with $GITHUB_REF_NAME iff $GITHUB_REF_NAME != 'main'
 
 
 BUCKET_PREFIX=dsire-api
 STAGES=( main staging testing )
 
 declare -A TOKENS_REPLACEMENTS
-TOKENS_REPLACEMENTS[{% API_URL %}]="${API_URL}/${GITHUB_REF_NAME}"
+TOKENS_REPLACEMENTS[{% STAGE %}]="${GITHUB_REF_NAME#main}"
 
 
 for view in dist/frontend/*.html; do

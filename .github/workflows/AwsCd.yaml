@@ -136,8 +136,6 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-      - name: Get root API URL (for rendering {% API_URL %})
-        run: echo "API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
       - name: Render and sync content with S3
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
@@ -156,6 +154,8 @@ jobs:
     environment: AWS_Development
     needs:
       - cloudformation
+      # Dodge weird condition where the environments can't be updated if the
+      # packages are in the process of deploying
       - deploy-packages-lambda
 
     steps:
@@ -167,12 +167,18 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+      - name: Get root API URL (for setting ROOT_API_URL)
+        run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
       - name: Sync all environment secrets with Lambda handlers
         env:
           APPROVER_EMAIL_MAIN: ${{ secrets.APPROVER_EMAIL_MAIN }}
           APPROVER_EMAIL_STAGING: ${{ secrets.APPROVER_EMAIL_STAGING }}
           APPROVER_EMAIL_TESTING: ${{ secrets.APPROVER_EMAIL_TESTING }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
           IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
+          PUBLIC_KEY: ${{ vars.PUBLIC_KEY_JWK }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY_JWK }}
+          SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: chmod +x .github/sync-env.sh; .github/sync-env.sh
