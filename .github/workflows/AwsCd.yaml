@@ -254,7 +254,7 @@ jobs:
                                             SIGNING_SECRET='${SIGNING_SECRET}',
                                             SMTP_USERNAME='${SMTP_USERNAME}',
                                             SMTP_PASSWORD='${SMTP_PASSWORD}',
-                                            STAGE='${GITHUB_REF_NAME}'}" > /dev/null
+                                            STAGE='${stage}'}" > /dev/null
               aws lambda wait function-updated --function-name "${STAGES_LAMBDAS[$stage]}"
           done
 
@@ -275,14 +275,18 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+      - name: Get root API URL (for setting $ROOT_API_URL)
+        run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
       - name: Render and sync content with S3
         run: |
           # Templating: replace...
           # {% STAGE %} with ${{ github.ref_name }} if ${{ github.ref_name }} != 'main'
           # {% COMMIT_HASH_SHORT %} with the first 7 characters of $GITHUB_SHA
+          # {$ API_URL %} with $ROOT_API_URL/$GITHUB_REF_NAME
           declare -A TOKENS_REPLACEMENTS
           TOKENS_REPLACEMENTS[{% STAGE %}]="${GITHUB_REF_NAME#main}"
           TOKENS_REPLACEMENTS[{% COMMIT_HASH_SHORT %}]="${GITHUB_SHA:0:7}"
+          TOKENS_REPLACEMENTS[{% API_URL %}]="${ROOT_API_URL}/${GITHUB_REF_NAME}"
           for view in dist/frontend/*.html; do
               for token in "${!TOKENS_REPLACEMENTS[@]}"; do
                   sed -i -e "s~${token}~${TOKENS_REPLACEMENTS[$token]}~g" "${view}"
@@ -290,7 +294,8 @@ jobs:
           done
           STAGES=( main staging testing )
           for stage in "${STAGES[@]}"; do
-              if [ "${stage}" == "${{ github.ref_name }}" ] || ! aws s3 ls s3://"${{ env.BUCKET_PREFIX }}"-hosting-"${stage}" | grep index.html || [ "${{ inputs.forceSync }}" == "true" ]; then
+              # TODO better way to check if host empty than assuming filled on any HTML file
+              if [ "${stage}" == "${{ github.ref_name }}" ] || ! aws s3 ls s3://"${{ env.BUCKET_PREFIX }}"-hosting-"${stage}" | grep html || [ "${{ inputs.forceSync }}" == "true" ]; then
                   echo "Content for stage ${stage} was updated or missing; it will be replaced by this content"
                   [ "${{ inputs.forceSync }}" == "true" ] && echo "(forced)"
                   aws s3 sync --delete dist/frontend s3://"${{ env.BUCKET_PREFIX }}"-hosting-"${stage}"
