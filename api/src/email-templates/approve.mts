@@ -1,4 +1,7 @@
-export default (name: string, email: string, org: string, approveLink: string): string => `
+import HTML from "./html.mjs"
+
+
+export default (name: string, email: string, org: string, approveLink: string): string => HTML`
 <!DOCTYPE html>
 <html>
 	<body>

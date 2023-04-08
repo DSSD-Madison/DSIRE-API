@@ -1,68 +1,32 @@
-input[type=text], select {
-  width: 150pt;
-  height: 5pt;
-  padding: 12px 5px;
-  margin: 1px 0;
-  display: inline-block;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
+@import "root.css";
+@import "sash.css";
+@import "loader.css";
+@import "ref-hash.css";
 
-.input-with-text {
-  padding: 5px;
-}
 
-.contents {
-    margin-top: 10%;
-    margin-bottom: 10%;
-    margin-left: 30%;
-    margin-right: 30%;
+#content input {
+    width: 60%;
+    max-width: 400px;
+    box-sizing: border-box;
+
+    font-size: 18px;
+    padding: 8px;
+    margin: 8px;
+    border-radius: 8px;
+    border: 1px solid grey;
     text-align: center;
-    padding: 10px;
-    border-radius: 15px 15px 15px 15px;
-    background-color: white;
+    text-overflow: ellipsis;
+    color: rgb(88, 88, 88);
+    font-family: "Noto Sans", sans-serif;
+
+    will-change: border;
+    transition: border .5s cubic-bezier(0, 1, .75, 1);
 }
-
-.button {
-    transition-duration: 0.4s;
-    border-radius: 15px 15px 15px 15px;
-    border-color:#c00;
-    height: 40px;
-    width: 80px;
-    padding: 5px;
-    margin: 5px;
-  }
-
-  .button:hover {
-    background-color: #c00; /* Green */
-    color: white;
-    border-radius: 15px 15px 15px 15px;
-  }
-
-  .button:active {
-    border-radius: 15px 15px 15px 15px;
-  }
-
-  .button:focus {
-    border-radius: 15px 15px 15px 15px;
-  }
-
-form {
-  font-family: 'Open Sans', sans-serif;
+#content input.error {
+    border: 1px solid red;
 }
-
-body {
-  background-color: #f2f2f2;
-}
-
-
-#stage {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  margin: 16px;
-  font-family: monospace;
-  color: grey;
-  font-size: 10px;
+#content button {
+    min-width: 96px;
+    min-height: 32px;
+    margin-top: 16px;
 }

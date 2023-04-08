@@ -6,7 +6,8 @@ import {checkJWS, decryptJWE, mintJWE, mintJWS} from "../crypto.mjs"
 
 export default async function approve(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
-    const email = (await checkJWS(await decryptJWE(event.queryStringParameters.token), "approve")).email
+    // TODO if token doesn't exist
+    const email = (await checkJWS(await decryptJWE(event?.queryStringParameters?.token || ""), "approve")).email
 
     // TODO TTK?
     const accessJWS = await mintJWS({accessLevel: 1}, "access", "364d")
@@ -24,9 +25,9 @@ export default async function approve(event: APIGatewayProxyEvent): Promise<APIG
     return {
         headers: {
             // TODO static URL
-            "Location": `https://dsire-api-hosting-${process.env.STAGE}.s3.amazonaws.com/postApprove.html`
+            "Location": `https://dsire-api-hosting-${process.env.STAGE}.s3.amazonaws.com/notify.html?message=approved`
         },
         statusCode: 303,
-        body: null
+        body: ""
     }
 }

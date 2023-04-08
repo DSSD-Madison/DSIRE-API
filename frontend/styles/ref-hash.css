@@ -1,0 +1,10 @@
+#ref-hash {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 16px;
+
+    font-family: monospace;
+    font-size: 10px;
+    color: grey;
+}

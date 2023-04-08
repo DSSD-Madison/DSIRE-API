@@ -1,0 +1,16 @@
+div.loader {
+    box-sizing: border-box;
+    width: 16px;
+    height: 16px;
+    border: 2px solid lightgrey;
+    border-radius: 8px;
+
+    margin-top: 4px;
+
+    animation: 1s infinite loader-animation;
+}
+@keyframes loader-animation {
+    33% {transform: translateX(16px);}
+    66% {transform: translateX(-16px);}
+    99% {transform: translateX(0);}
+}

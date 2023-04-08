@@ -1,0 +1,102 @@
+body {
+    display: grid;
+    grid-template-columns: 15% auto 15%;
+    grid-template-rows: 10% 20% 40% 20% 10%;
+    grid-template-areas: ". .       ."
+                         ". meta    ."
+                         ". content ."
+                         ". status  ."
+                         ". .       .";
+}
+
+#sash {
+    grid-area: meta / content / status;
+    max-height: 100%;
+
+    border-radius: 48px;
+    background-color: white;
+    box-shadow: 0 0 16px -8px grey;
+
+    will-change: max-height;
+    transition: max-height .5s cubic-bezier(0, 1, .75, 1);
+}
+#sash.reveal-status {
+    max-height: 75%;
+}
+
+#meta {
+    grid-area: meta;
+    container: meta / size;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+}
+@container meta (height) {
+    #DSIRE {
+        font-size: 50cqh;
+        letter-spacing: -4cqh;
+    }
+    #subtitle {
+        margin-top: -12cqh;
+        font-size: min(10cqh, 5cqw);
+    }
+}
+#DSIRE {
+    font-family: "PT Sans";
+    font-weight: 700;
+}
+#subtitle {
+    font-family: "Noto Sans", sans-serif;
+    color: rgb(88, 88, 88);
+}
+
+#content {
+    grid-area: content;
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+#status {
+    grid-area: status;
+    container: status / size;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    z-index: -999;
+    padding: 12px;
+    padding-top: 24px;
+}
+@container status (height) {
+    #status-header {
+        font-size: 16cqh;
+    }
+    #status-message {
+        font-size: 8cqh;
+    }
+}
+#status-header {
+    color: grey;
+    font-family: "Noto Sans", sans-serif;
+    font-weight: 700;
+
+    will-change: color;
+    transition: color .5s cubic-bezier(0, 1, .75, 1);
+}
+#status-header.OK {
+    color: green;
+}
+#status-header.error {
+    color: red;
+}
+#status-message {
+    margin-top: 4px;
+
+    color: black;
+    font-family: "Noto Sans", sans-serif;
+}

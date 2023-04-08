@@ -5,6 +5,16 @@ import * as handlers from "./handlers/handlers.mjs";
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
 
+    if (event.httpMethod == "OPTIONS") return {
+        headers: {
+            "Access-Control-Allow-Origin": `https://dsire-api-hosting-${process.env.STAGE}.s3.amazonaws.com`,
+            "Access-Control-Allow-Methods": "OPTIONS, GET, POST",
+            "Access-Control-Allow-Headers" : "content-type"
+        },
+        statusCode: 200,
+        body: ""
+    }
+
     const requestPath = '/' + event.path.split('/').slice(1).join('/');
     switch(requestPath) {
 
