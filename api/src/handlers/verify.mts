@@ -6,7 +6,8 @@ import {checkJWS, decryptJWE, mintJWE, mintJWS} from "../crypto.mjs"
 
 export default async function verify(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
-    const userData = await checkJWS(await decryptJWE(event.queryStringParameters.token), "verify")
+    // TODO if token doesn't exist
+    const userData = await checkJWS(await decryptJWE(event?.queryStringParameters?.token || ""), "verify")
 
     // TODO TTK?
     const approveJWE = await mintJWE(await mintJWS({email: userData.email}, "approve", "72h"))
@@ -24,9 +25,9 @@ export default async function verify(event: APIGatewayProxyEvent): Promise<APIGa
     return {
         headers: {
             // TODO static URL
-            "Location": `https://dsire-api-hosting-${process.env.STAGE}.s3.amazonaws.com/postVerify.html`
+            "Location": `https://dsire-api-hosting-${process.env.STAGE}.s3.amazonaws.com/notify.html?message=verified`
         },
         statusCode: 303,
-        body: null
+        body: ""
     }
 }

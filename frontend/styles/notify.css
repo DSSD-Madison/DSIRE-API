@@ -1,0 +1,7 @@
+@import "root.css";
+@import "sash.css";
+@import "ref-hash.css";
+
+img {
+    max-width: 220px;
+}

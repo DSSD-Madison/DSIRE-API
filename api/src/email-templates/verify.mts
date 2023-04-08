@@ -1,4 +1,7 @@
-export default (email: string, verifyLink: string): string => `
+import HTML from "./html.mjs"
+
+
+export default (email: string, verifyLink: string): string => HTML`
 <!DOCTYPE html>
 <html>
 	<body>
