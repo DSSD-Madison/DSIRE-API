@@ -1,4 +1,7 @@
-export default (accessToken: string, revocationLink: string): string => `
+import HTML from "./html.mjs"
+
+
+export default (accessToken: string, revocationLink: string): string => HTML`
 <!DOCTYPE html>
 <html>
 	<body>

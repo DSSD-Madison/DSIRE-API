@@ -1,3 +1,6 @@
+// TODO if environment defaults are undefined
+
+
 import {subtle as SubtleCrypto} from "crypto"
 
 import {compactDecrypt,
@@ -13,7 +16,7 @@ export async function mintJWS(
     sub: string,
     expirationTime: number | string,
     issuer: string="DSIRE-API",
-    secret: string=process.env.SIGNING_SECRET
+    secret: string=process.env.SIGNING_SECRET || ""
 ): Promise<string> {
 
     return new SignJWT(payload)
@@ -28,7 +31,7 @@ export async function mintJWS(
 
 export async function mintJWE(
     plaintext: object | string,
-    key: CryptoKey | string=process.env.PUBLIC_KEY
+    key: CryptoKey | string=process.env.PUBLIC_KEY || ""
 ): Promise<string> {
 
     if (typeof plaintext === "object") plaintext = JSON.stringify(plaintext);
@@ -42,7 +45,7 @@ export async function mintJWE(
 
 export async function decryptJWE(
     token: string,
-    key: CryptoKey | string=process.env.PRIVATE_KEY
+    key: CryptoKey | string=process.env.PRIVATE_KEY || ""
 ): Promise<string> {
 
     if (typeof key === "string") key = await SubtleCrypto.importKey("jwk", JSON.parse(key), {name: "RSA-OAEP", hash: "SHA-256"}, false, ["decrypt"]);
@@ -55,7 +58,7 @@ export async function checkJWS(
     token: string,
     sub: string,
     issuer: string="DSIRE-API",
-    secret: string=process.env.SIGNING_SECRET
+    secret: string=process.env.SIGNING_SECRET || ""
 ): Promise<JWTPayload> {
 
     return (await jwtVerify(token, new TextEncoder().encode(secret), {

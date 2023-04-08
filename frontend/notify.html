@@ -6,17 +6,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link type="text/css" rel="stylesheet" href="styles/registration.css">
+    <link type="text/css" rel="stylesheet" href="styles/notify.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=PT+Sans:wght@700&display=swap">
 
-    <script type="module" src="scripts/index.mjs" defer></script>
+    <script type="module" src="scripts/notify.mjs" defer></script>
 
-    <title>API Registration—DSIRE</title>
+    <title></title>
 </head>
-
 
 <body>
 
@@ -24,24 +23,18 @@
 
     <div id="meta">
         <span id="DSIRE">DSIRE</span>
-        <span id="subtitle">Public Database API Access Request</span>
+        <span id="subtitle">API Verification System</span>
     </div>
 
     <div id="content">
-        <input id="form-name" type="text" placeholder="*Contact name">
-        <input id="form-email" type="email" placeholder="*Contact email">
-        <input id="form-org" type="text" placeholder="*Contact's organization">
-        <button id="submit">Submit</button>
+        <img src="./images/checkmark.png">
     </div>
 
     <div id="status">
-        <span id="status-header"></span>
+        <span id="status-header" class="OK"></span>
         <span id="status-message"></span>
-        <div id="loader" class="loader"></div>
     </div>
 
     <span id="ref-hash">{% STAGE %} {% COMMIT_HASH_SHORT %}</span>
-
-    <div id="API_URL" style="display: none">{% API_URL %}</div>
 
 </body>
