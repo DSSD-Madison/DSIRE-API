@@ -1,4 +1,4 @@
-import HTML from "./html.mjs"
+import HTML from "./html"
 
 
 export default (email: string, verifyLink: string): string => HTML`

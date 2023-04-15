@@ -5,17 +5,15 @@ Description: "Infrastructure for the DSIRE API ecosystem"
 
 Parameters:
 
-  CdStackName:
-    Type: String
-    Default: GitHubActionsCd
-
   VpcId:
     Type: String
     Default: vpc-02aebef18a7738b6a
+    Description: "The ID of the VPC holding the programs database"
 
   SecurityGroupId:
     Type: String
     Default: sg-034ea701a79012c14
+    Description: "The ID of the security group in the VPC managing the programs database"
 
   SubnetIds:
     Type: CommaDelimitedList
@@ -60,103 +58,11 @@ Resources:
         Type: AWS_PROXY
         # Mandatory for AWS_PROXY/lambda integration
         IntegrationHttpMethod: POST
-        # TODO: is this the cleanest?
+        # TODO is this the cleanest?
         Uri: !Join ["", [!Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:", "${stageVariables.handler}", "/invocations"]]
 
 
-  MainDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn: ProxyMethod
-    Properties:
-      RestApiId: !Ref Api
-      # Don't do this: it creates a default stage for the deployment, but we want a custom one (below)
-      #StageName: main
-  StagingDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn: ProxyMethod
-    Properties:
-      RestApiId: !Ref Api
-  TestingDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn: ProxyMethod
-    Properties:
-      RestApiId: !Ref Api
-
-  MainStage:
-    Type: AWS::ApiGateway::Stage
-    DependsOn:
-      - MainDeployment
-      - MainHandler
-    Properties:
-      RestApiId: !Ref Api
-      DeploymentId: !Ref MainDeployment
-      StageName: main
-      Variables:
-        handler: !Ref MainHandler
-  StagingStage:
-    Type: AWS::ApiGateway::Stage
-    DependsOn:
-      - StagingDeployment
-      - StagingHandler
-    Properties:
-      RestApiId: !Ref Api
-      DeploymentId: !Ref StagingDeployment
-      StageName: staging
-      Variables:
-        handler: !Ref StagingHandler
-  TestingStage:
-    Type: AWS::ApiGateway::Stage
-    DependsOn:
-      - TestingDeployment
-      - TestingHandler
-    Properties:
-      RestApiId: !Ref Api
-      DeploymentId: !Ref TestingDeployment
-      StageName: testing
-      Variables:
-        handler: !Ref TestingHandler
-
-
-  MainHandlerInvokePermission:
-    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-permission.html
-    # Allow the lambda to fire on its corresponding stage's API Gateway activity
-    # (https://aws.amazon.com/blogs/compute/using-api-gateway-stage-variables-to-manage-lambda-functions/;
-    # see "You defined your Lambda function as a stage variable; you must manually give permissions to all the functions you will use...")
-    Type: AWS::Lambda::Permission
-    DependsOn: MainHandler
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref MainHandler
-      Principal: apigateway.amazonaws.com
-      # /*/*/* is stage/request-type/endpoint
-      SourceArn: !Sub
-                   - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API_ID}/${STAGE_NAME}/*/*
-                   - API_ID: !Ref Api
-                     STAGE_NAME: !Ref MainStage
-  StagingHandlerInvokePermission:
-    Type: AWS::Lambda::Permission
-    DependsOn: StagingHandler
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref StagingHandler
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub
-                   - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API_ID}/${STAGE_NAME}/*/*
-                   - API_ID: !Ref Api
-                     STAGE_NAME: !Ref StagingStage
-  TestingHandlerInvokePermission:
-    Type: AWS::Lambda::Permission
-    DependsOn: TestingHandler
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref TestingHandler
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub
-                   - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API_ID}/${STAGE_NAME}/*/*
-                   - API_ID: !Ref Api
-                     STAGE_NAME: !Ref TestingStage
-
-  LambdaRole:
+  HandlerRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: DsireApiHandlers
@@ -169,7 +75,7 @@ Resources:
             Service: lambda.amazonaws.com
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        # TODO: wildcard
+        # TODO wildcard
         - arn:aws:iam::aws:policy/AmazonSESFullAccess
       Policies:
         - PolicyDocument:
@@ -181,97 +87,9 @@ Resources:
                   - ec2:CreateNetworkInterface
                   - ec2:DescribeNetworkInterfaces
                   - ec2:DeleteNetworkInterface
-                # TODO: wildcard
+                # TODO wildcard
                 Resource: "*"
           PolicyName: AllowVpcNetworking
-
-
-  DependencyLayer:
-    Type: AWS::Lambda::LayerVersion
-    Properties:
-      CompatibleArchitectures: ["x86_64"]
-      CompatibleRuntimes: ["nodejs18.x"]
-      Content:
-        S3Bucket:
-          Fn::ImportValue: !Sub
-                            - ${CD_STACK}-PackageBucketArn
-                            - CD_STACK: !Ref CdStackName
-        S3Key: api-dependencies.zip
-      Description: "node_modules for the DSIRE API"
-      LayerName: "HandlerDependencies"
-
-  MainHandler:
-    Type: AWS::Lambda::Function
-    DependsOn:
-      - DependencyLayer
-      - LambdaRole
-    Properties:
-      FunctionName: MainHandler
-      Description: Handles all backend functionality
-      Code:
-        S3Bucket:
-          Fn::ImportValue: !Sub
-                             - ${CD_STACK}-PackageBucketArn
-                             - CD_STACK: !Ref CdStackName
-        S3Key: api-main.zip
-      PackageType: Zip
-      Runtime: nodejs18.x
-      Layers: [!Ref DependencyLayer]
-      Handler: index.handler
-      Timeout: 10
-      Role: !GetAtt LambdaRole.Arn
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SecurityGroupId
-        SubnetIds: !Ref SubnetIds
-  StagingHandler:
-    Type: AWS::Lambda::Function
-    DependsOn:
-      - DependencyLayer
-      - LambdaRole
-    Properties:
-      FunctionName: StagingHandler
-      Description: Handles all backend functionality
-      Code:
-        S3Bucket:
-          Fn::ImportValue: !Sub
-                             - ${CD_STACK}-PackageBucketArn
-                             - CD_STACK: !Ref CdStackName
-        S3Key: api-staging.zip
-      PackageType: Zip
-      Runtime: nodejs18.x
-      Layers: [!Ref DependencyLayer]
-      Handler: index.handler
-      Timeout: 10
-      Role: !GetAtt LambdaRole.Arn
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SecurityGroupId
-        SubnetIds: !Ref SubnetIds
-  TestingHandler:
-    Type: AWS::Lambda::Function
-    DependsOn:
-      - DependencyLayer
-      - LambdaRole
-    Properties:
-      FunctionName: TestingHandler
-      Description: Handles all backend functionality
-      Code:
-        S3Bucket:
-          Fn::ImportValue: !Sub
-                             - ${CD_STACK}-PackageBucketArn
-                             - CD_STACK: !Ref CdStackName
-        S3Key: api-testing.zip
-      PackageType: Zip
-      Runtime: nodejs18.x
-      Layers: [!Ref DependencyLayer]
-      Handler: index.handler
-      Timeout: 10
-      Role: !GetAtt LambdaRole.Arn
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SecurityGroupId
-        SubnetIds: !Ref SubnetIds
 
 
   SesEndpoint:
@@ -298,18 +116,34 @@ Resources:
 
 Outputs:
 
-  MainApiUrl:
-    Description: URL for querying the DSIRE API, main version
-    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${MainStage}"
-  StagingApiUrl:
-    Description: URL for querying the DSIRE API, staging version
-    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${StagingStage}"
-  TestingApiUrl:
-    Description: URL for querying the DSIRE API, testing version
-    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${TestingStage}"
+  VpcId:
+    Value: !Ref VpcId
+    Export:
+      Name: VpcId
+
+  SecurityGroupId:
+    Value: !Ref SecurityGroupId
+    Export:
+      Name: SecurityGroupId
+
+  SubnetIds:
+    Value: !Join [",", !Ref SubnetIds]
+    Export:
+      Name: SubnetIds
+
+
+  ApiId:
+    Value: !Ref Api
+    Export:
+      Name: ApiId
 
   ApiUrl:
-    Description: Root URL for querying the DSIRE API (for pragmatic access/use)
     Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com"
     Export:
       Name: ApiUrl
+    Description: Root URL for querying the DSIRE API
+
+  HandlerRoleArn:
+    Value: !GetAtt HandlerRole.Arn
+    Export:
+      Name: HandlerRoleArn

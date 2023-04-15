@@ -1,0 +1,282 @@
+name: AWS Deploy
+run-name: Build and deploy on AWS
+
+on:
+  push:
+    branches:
+      - main
+      - preview/**
+
+# Required for aws-actions/configure-aws-credentials
+permissions:
+  id-token: write
+  contents: read
+
+
+jobs:
+
+  get-name:
+      name: Generate deployment name
+      runs-on: ubuntu-latest
+      environment: AWS_Development
+      outputs:
+        NAME: ${{ steps.get-name.outputs.NAME }}
+
+      steps:
+
+        - name: Generate deployment name for branch ${{ github.ref_name }}
+          id: get-name
+          env:
+            SED_REF_NAME: s~\.~-~g; s~_~-~g; s~/~-~g
+          run: echo "NAME=$(echo "${{ github.ref_name }}" | sed "${SED_REF_NAME}")" >> $GITHUB_OUTPUT
+
+
+  build-package:
+    name: Build/zip API for Lambda
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs: get-name
+    env:
+      PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
+
+    steps:
+      - name: Checkout branch ${{ github.ref_name }}
+        uses: actions/checkout@v3
+
+      - name: Install Node.js version ${{ vars.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ vars.NODE_VERSION }}
+
+      - name: Set NODE_ENV for production
+        run: echo "NODE_ENV=production" >> $GITHUB_ENV
+        if: github.ref_name == 'main'
+      - name: Set NODE_ENV for development
+        run: echo "NODE_ENV=development" >> $GITHUB_ENV
+        if: github.ref_name != 'main'
+
+      - name: Install dependencies
+        working-directory: api
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: api
+        run: npx prisma generate
+
+      - name: Bundle and minify TypeScript (production build)
+        working-directory: api
+        run: npm run build-main
+        if: github.ref_name == 'main'
+
+      - name: Bundle and sourcemap TypeScript (development build)
+        working-directory: api
+        run: npm run build
+        if: github.ref_name != 'main'
+
+      - name: Copy Prisma client to distribution context
+        run: |
+          mkdir -p dist/api/node_modules && cp -r api/node_modules/{@prisma,.prisma} dist/api/node_modules/
+
+      - name: Remove extraneous native Prisma query engines
+        working-directory: dist/api/node_modules/.prisma/client
+        run: rm libquery_engine-debian*
+
+      - name: Zip API package ${{ env.PACKAGE_NAME }}
+        working-directory: dist/api
+        run: zip -9 -r ../${PACKAGE_NAME}.zip .
+
+      - name: Upload API package as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+          path: dist/${{ env.PACKAGE_NAME }}.zip
+
+  sync-package:
+    name: Sync API package with S3
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs:
+      - get-name
+      - build-package
+    env:
+      PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
+
+    steps:
+
+      - name: Download API package as artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Sync package with S3
+        run: aws s3 sync --size-only . s3://${{ vars.PACKAGE_BUCKET }}
+
+  deploy-handler:
+    name: Configure Lambda handler
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs:
+      - get-name
+      - sync-package
+    env:
+      NAME: ${{ needs.get-name.outputs.NAME }}
+      STACK_NAME: DsireApi-${{ needs.get-name.outputs.NAME }}
+
+    steps:
+      - name: Checkout branch ${{ github.ref_name }}
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Deploy handler stack
+        working-directory: aws/CloudFormation
+        env:
+          CF_TAGS: prouduct=DsireApi
+        run: aws cloudformation deploy --template-file DsireApiHandler.yaml --parameter-overrides Name=${NAME} --stack-name ${STACK_NAME} --tags ${CF_TAGS} --no-fail-on-empty-changeset
+
+  deploy-package:
+      name: Deploy API on Lambda
+      runs-on: ubuntu-latest
+      environment: AWS_Development
+      needs:
+        - get-name
+        - deploy-handler
+      env:
+        PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
+        HANDLER_NAME: DsireApi_${{ needs.get-name.outputs.NAME }}
+
+      steps:
+
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-region: ${{ vars.AWS_REGION }}
+            role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+        - name: Deploy package on Lambda
+          run: |
+            aws lambda update-function-code --function-name="${HANDLER_NAME}" --s3-bucket ${{ vars.PACKAGE_BUCKET }} --s3-key ${PACKAGE_NAME}.zip > /dev/null
+            aws lambda wait function-updated --function-name="${HANDLER_NAME}"
+
+  sync-environment-lambda:
+    name: Sync secrets with Lambda
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs:
+      - get-name
+      - deploy-package
+    env:
+      NAME: ${{ needs.get-name.outputs.NAME }}
+      HANDLER_NAME: DsireApi_${{ needs.get-name.outputs.NAME }}
+
+    steps:
+
+      - name: Set APPROVER_EMAIL for production
+        run: echo "APPROVER_EMAIL=${{ secrets.APPROVER_EMAIL }}" >> $GITHUB_ENV
+        if: github.ref_name == 'main'
+      - name: Set APPROVER_EMAIL for development
+        run: echo "APPROVER_EMAIL=${{ secrets.APPROVER_EMAIL_development }}" >> $GITHUB_ENV
+        if: github.ref_name != 'main'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Get root API URL (for setting $ROOT_API_URL)
+        run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
+
+      - name: Sync all environment secrets with Lambda handlers
+        env:
+          APPROVER_EMAIL: ${{ env.APPROVER_EMAIL }}
+          DB_URI: ${{ secrets.DB_URI }}
+          IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
+          NAME: ${{ env.NAME }}
+          NODE_OPTIONS: ${{ vars.NODE_OPTIONS }}
+          PUBLIC_KEY: ${{ vars.PUBLIC_KEY_JWK }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY_JWK }}
+          ROOT_API_URL: ${{ env.ROOT_API_URL }}
+          SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: |
+          aws lambda update-function-configuration \
+              --function-name="${HANDLER_NAME}" \
+              --environment "Variables={APPROVER_EMAIL='${APPROVER_EMAIL}',
+                                        DB_URI='${DB_URI}',
+                                        IDENTITY_EMAIL='${IDENTITY_EMAIL}',
+                                        NAME='${NAME}',
+                                        NODE_OPTIONS='${NODE_OPTIONS}',
+                                        PUBLIC_KEY='${PUBLIC_KEY}',
+                                        PRIVATE_KEY='${PRIVATE_KEY}',
+                                        ROOT_API_URL='${ROOT_API_URL}',
+                                        SIGNING_SECRET='${SIGNING_SECRET}',
+                                        SMTP_USERNAME='${SMTP_USERNAME}',
+                                        SMTP_PASSWORD='${SMTP_PASSWORD}'}" > /dev/null
+          aws lambda wait function-updated --function-name "${HANDLER_NAME}"
+
+
+  render-sync-content:
+    name: Render content to S3
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs: get-name
+    env:
+      NAME: ${{ needs.get-name.outputs.NAME }}
+
+    steps:
+      - name: Checkout branch ${{ github.ref_name }}
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Get root API URL as $ROOT_API_URL (for templating {% API_URL %})
+        run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
+
+      - name: Render content
+        working-directory: dist/frontend/
+        # Templating: replace...
+        # {% STAGE %} with ${{ github.ref_name }} if ${{ github.ref_name }} != 'main' else ""
+        # {% COMMIT_HASH_SHORT %} with the first 7 characters of $GITHUB_SHA if ${{ github.ref_name }} != 'main' else ""
+        # {% API_URL %} with $ROOT_API_URL/${{ github.ref_name }}
+        run: |
+          declare -A TOKENS_REPLACEMENTS
+          TOKENS_REPLACEMENTS[{% STAGE %}]=""
+          TOKENS_REPLACEMENTS[{% COMMIT_HASH_SHORT %}]=""
+          if [[ ${{ github.ref_name }} != 'main' ]]; then
+              TOKENS_REPLACEMENTS[{% STAGE %}]="${{ github.ref_name }}"
+              TOKENS_REPLACEMENTS[{% COMMIT_HASH_SHORT %}]="${GITHUB_SHA:0:7}"
+          fi
+          TOKENS_REPLACEMENTS[{% API_URL %}]="${ROOT_API_URL}"/${NAME}
+          shopt -s globstar
+          for view in **/*.html; do
+              for token in "${!TOKENS_REPLACEMENTS[@]}"; do
+                  sed -i "s~${token}~${TOKENS_REPLACEMENTS[$token]}~g" "${view}"
+              done
+          done
+
+      - name: Upload content as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend_${{ env.NAME }}
+          path: dist/frontend/*
+
+      - name: Render and sync content with S3
+        working-directory: dist/frontend
+        run: |
+          aws s3 sync --delete . s3://${{ vars.HOSTING_BUCKET }}/${NAME}/

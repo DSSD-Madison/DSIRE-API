@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Associates a lambda handler with an API stage and deploys it on the gateway for the DSIRE API"
+
+
+
+# Imports:
+
+  # GitHubActionsCd:
+    # PackageBucketName
+
+  # DsireApi
+    # SecurityGroupId
+    # SubnetIds
+    # ApiId
+    # HandlerRoleArn
+
+
+
+Parameters:
+
+  Name:
+    Type: String
+    Description: >
+      The name of the handler is used to retrieve its deployment package
+      (api-$NAME.zip), set its stage on the API Gateway, and to set descriptions.
+
+
+
+Resources:
+
+  Handler:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ['_', ["DsireApi", !Ref Name]]
+      Description: !Sub
+                     - "Handler for API stage ${NAME}"
+                     - NAME: !Ref Name
+      Code:
+        S3Bucket: !ImportValue PackageBucketName
+        S3Key: !Sub
+                 - "api_${NAME}.zip"
+                 - NAME: !Ref Name
+      PackageType: Zip
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Timeout: 10
+      Role: !ImportValue HandlerRoleArn
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue SecurityGroupId
+        SubnetIds: !Split [",", !ImportValue SubnetIds]
+
+  InvokePermission:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-permission.html
+    # Allow the lambda to fire on its corresponding stage's API Gateway activity
+    # https://aws.amazon.com/blogs/compute/using-api-gateway-stage-variables-to-manage-lambda-functions/
+    # see "You defined your Lambda function as a stage variable; you must manually give permissions to all
+    # the functions you will use..."
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - Stage
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Handler
+      Principal: apigateway.amazonaws.com
+      # /*/*/* is stage/request-type/endpoint
+      SourceArn: !Sub
+                    - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API_ID}/${STAGE_NAME}/*/*
+                    - API_ID: !ImportValue ApiId
+                      STAGE_NAME: !Ref Name
+
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !ImportValue ApiId
+    # Don't do this: it creates a default stage for the deployment, but we want a custom one (below)
+    #StageName: main
+
+  Stage:
+    Type: AWS::ApiGateway::Stage
+    DependsOn:
+      - Handler
+      - Deployment
+    Properties:
+      RestApiId: !ImportValue ApiId
+      DeploymentId: !Ref Deployment
+      StageName: !Ref Name
+      Variables:
+        handler: !Ref Handler
