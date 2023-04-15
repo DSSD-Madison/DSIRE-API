@@ -1,15 +1,11 @@
 import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda"
 import {z} from "zod"
 
-import mailTransport from "../mailTransport.mjs"
-import {mintJWE, mintJWS} from "../crypto.mjs"
-import verifyTemplate from "../email-templates/verify.mjs"
+import {CORS_HEADERS} from "./headers"
+import mailTransport from "../mailTransport"
+import {mintJWE, mintJWS} from "../crypto"
+import verifyTemplate from "../email-templates/verify"
 
-const CORS_HEADERS = {
-    "Access-Control-Allow-Origin": `https://dsire-api-hosting-${process.env.STAGE}.s3.amazonaws.com`,
-    "Access-Control-Allow-Methods": "POST",
-    "Access-Control-Allow-Headers" : "content-type"
-}
 const RESPONSE_HEADERS = {
     ...CORS_HEADERS,
     "content-type": "application/json"

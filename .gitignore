@@ -1,4 +1,7 @@
+dist/api
+
 *.pem
+meta.json
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,node
@@ -144,7 +147,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/

@@ -2,7 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Use GitHub & S3 for package and hosting CD via OIDC"
 
 
+
 Parameters:
+
+  GitHubOIDCThumbprint:
+    Type: String
+    Default: 6938FD4D98BAB03FAADB97B34396831E3780AEA1
 
   GitHubOrgName:
     Type: String
@@ -12,13 +17,6 @@ Parameters:
     Type: String
     Default: DSIRE-API
 
-  GitHubOIDCThumbprint:
-    Type: String
-    Default: 6938FD4D98BAB03FAADB97B34396831E3780AEA1
-
-  BucketPrefix:
-    Type: String
-    Default: dsire-api
 
 
 Resources:
@@ -32,16 +30,10 @@ Resources:
       ClientIdList:
         - sts.amazonaws.com
 
-  PackageBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Join ["-", [!Ref BucketPrefix, "packages"]]
-
   GitHubActionsRole:
     Type: AWS::IAM::Role
     DependsOn:
       - GitHubOIDCProvider
-      - PackageBucket
     Properties:
       RoleName: GitHubActions
       Description: The role assumed by GitHub Actions from the configured organization & repository
@@ -61,7 +53,7 @@ Resources:
               token.actions.githubusercontent.com:aud: sts.amazonaws.com
             StringLike:
               token.actions.githubusercontent.com:sub: !Sub
-                # TODO: restrict * to only CD branches/refs
+                # TODO restrict * to only CD branches/refs
                 - repo:${ORG}/${REPO}:*
                 - ORG: !Ref GitHubOrgName
                   REPO: !Ref GitHubRepoName
@@ -83,7 +75,7 @@ Resources:
       #             - s3:DeleteObject
       #           Resource: !Join ["/", [!GetAtt PackageBucket.Arn, "*"]]
       #     PolicyName: GitHubActionsS3RWX
-      # TODO: wildcard (replace managed allow-all policies with minimal customer policies, as above)
+      # TODO wildcard (replace managed allow-all policies with minimal customer policies, as above)
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
         - arn:aws:iam::aws:policy/AmazonEC2FullAccess
@@ -93,80 +85,43 @@ Resources:
         - arn:aws:iam::aws:policy/IAMFullAccess
 
 
-  MainHost:
+  PackageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: dsire-api-packages
+
+  HostingBucket:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
-      BucketName: !Join ["-", [!Ref BucketPrefix, "hosting", "main"]]
-      WebsiteConfiguration:
-        IndexDocument: "index.html"
-        ErrorDocument: "error.html"
-  StagingHost:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-      BucketName: !Join ["-", [!Ref BucketPrefix, "hosting", "staging"]]
-      WebsiteConfiguration:
-        IndexDocument: "index.html"
-        ErrorDocument: "error.html"
-  TestingHost:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-      BucketName: !Join ["-", [!Ref BucketPrefix, "hosting", "testing"]]
+      BucketName: dsire-api-hosting
       WebsiteConfiguration:
         IndexDocument: "index.html"
         ErrorDocument: "error.html"
 
-  MainHostPRGO:
+  HostingBucketPRGO:
     Type: AWS::S3::BucketPolicy
+    DependsOn: HostingBucket
     Properties:
-      Bucket: !Ref MainHost
+      Bucket: !Ref HostingBucket
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
            Effect: Allow
            Action: s3:GetObject
            Principal: "*"
-           Resource: !Join ["/", [!GetAtt MainHost.Arn, "*"]]
-  StagingHostPRGO:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref StagingHost
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-           Effect: Allow
-           Action: s3:GetObject
-           Principal: "*"
-           Resource: !Join ["/", [!GetAtt StagingHost.Arn, "*"]]
-  TestingHostPRGO:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref TestingHost
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-           Effect: Allow
-           Action: s3:GetObject
-           Principal: "*"
-           Resource: !Join ["/", [!GetAtt TestingHost.Arn, "*"]]
+           Resource: !Join ["/", [!GetAtt HostingBucket.Arn, "*"]]
+
 
 
 Outputs:
 
-  PackageBucketArn:
-    Description: Name of the S3 bucket created for CD packages
+  PackageBucketName:
     Value: !Ref PackageBucket
     Export:
-      Name: !Sub ${AWS::StackName}-PackageBucketArn
+      Name: PackageBucketName
+    Description: Name of the S3 bucket created for CD packages
 
-  MainFrontendHostingUrl:
-    Description: Hosted URL for accessing the DSIRE API frontend, main version
-    Value: !GetAtt MainHost.WebsiteURL
-  StagingFrontendHostingUrl:
-    Description: Hosted URL for accessing the DSIRE API frontend, staging version
-    Value: !GetAtt StagingHost.WebsiteURL
-  TestingFrontendHostingUrl:
-    Description: Hosted URL for accessing the DSIRE API frontend, testing version
-    Value: !GetAtt TestingHost.WebsiteURL
+  HostingUrl:
+    Description: Root URL for accessing hosted content
+    Value: !GetAtt HostingBucket.WebsiteURL

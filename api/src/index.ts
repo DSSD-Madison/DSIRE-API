@@ -1,6 +1,6 @@
 import {APIGatewayEvent, APIGatewayProxyHandler, APIGatewayProxyResult} from "aws-lambda"
 
-import * as handlers from "./handlers/handlers.mjs";
+import * as handlers from "./handlers/handlers";
 
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
@@ -17,6 +17,9 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent): P
 
     const requestPath = '/' + event.path.split('/').slice(1).join('/');
     switch(requestPath) {
+
+        case "/graphql":
+            return handlers.graphql(event);
 
         case "/register":
             return handlers.register(event);
