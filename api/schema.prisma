@@ -22,7 +22,7 @@ model authority {
   expiredtext   String?   @dsire.VarChar(255)
   file_key      String?   @dsire.VarChar(255)
   file_name     String?   @dsire.VarChar(255)
-  program       program   @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_authority_program")
+  program       Program   @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_authority_program")
 
   @@index([program_id], map: "fk_authority_program_idx")
 }
@@ -31,9 +31,9 @@ model city {
   id           Int            @id @default(autoincrement()) @dsire.UnsignedInt
   name         String?        @dsire.VarChar(255)
   state_id     Int            @dsire.UnsignedInt
-  state        state          @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_city_state1")
+  state        State          @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_city_state1")
   program_city program_city[]
-  zipcode      zipcode[]
+  zipcode      Zip[]
 
   @@index([state_id], map: "fk_utility_state1_idx")
 }
@@ -53,7 +53,7 @@ model contact {
   city                String?           @dsire.VarChar(255)
   state_id            Int?              @dsire.UnsignedInt
   zip                 String?           @dsire.VarChar(255)
-  state               state?            @relation(fields: [state_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contact_ibfk_1")
+  state               State?            @relation(fields: [state_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contact_ibfk_1")
   program_contact     program_contact[]
 
   @@index([state_id], map: "state_id")
@@ -63,9 +63,9 @@ model county {
   id             Int              @id @default(autoincrement()) @dsire.UnsignedInt
   name           String?          @dsire.VarChar(255)
   state_id       Int?             @dsire.UnsignedInt
-  state          state?           @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_county_state1")
+  state          State?           @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_county_state1")
   program_county program_county[]
-  zipcode        zipcode[]
+  zipcode        Zip[]
 
   @@index([state_id], map: "fk_utility_state1_idx")
 }
@@ -91,7 +91,7 @@ model implementing_sector {
   id      Int       @id @default(autoincrement()) @dsire.UnsignedInt
   name    String?   @dsire.VarChar(45)
   active  Boolean   @default(false)
-  program program[]
+  program Program[]
 }
 
 model parameter {
@@ -110,7 +110,7 @@ model parameter_set {
   id                       Int                        @id @default(autoincrement()) @dsire.UnsignedInt
   program_id               Int                        @dsire.UnsignedInt
   parameter                parameter[]
-  program                  program                    @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_parameter_set_program1")
+  program                  Program                    @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_parameter_set_program1")
   parameter_set_sector     parameter_set_sector[]
   parameter_set_technology parameter_set_technology[]
 
@@ -137,12 +137,12 @@ model parameter_set_technology {
   @@index([set_id], map: "fk_parameter_set_technology_set1")
 }
 
-model program {
+model Program {
   id                      Int                  @id @default(autoincrement()) @dsire.UnsignedInt
   state_id                Int                  @dsire.UnsignedInt
   is_entire_state         Boolean              @default(false)
   implementing_sector_id  Int                  @dsire.UnsignedInt
-  program_category_id     Int                  @dsire.UnsignedInt
+  programCategoryId       Int                  @dsire.UnsignedInt @map("program_category_id")
   program_type_id         Int                  @dsire.UnsignedInt
   created_by_user_id      Int                  @dsire.UnsignedInt
   code                    String?              @dsire.VarChar(45)
@@ -150,13 +150,13 @@ model program {
   updated_ts              DateTime?            @dsire.DateTime(0)
   created_ts              DateTime?            @dsire.Timestamp(0)
   published               Boolean              @default(false)
-  websiteurl              String?              @dsire.VarChar(255)
+  url                     String?              @dsire.VarChar(255) @map("websiteurl")
   administrator           String?              @dsire.VarChar(255)
   fundingsource           String?              @dsire.VarChar(255)
   budget                  String?              @dsire.VarChar(255)
-  start_date              DateTime?            @dsire.DateTime(0)
+  startDate               DateTime?            @dsire.DateTime(0) @map("start_date")
   start_date_text         String?              @dsire.VarChar(255)
-  end_date                DateTime?            @dsire.DateTime(0)
+  endDate                 DateTime?            @dsire.DateTime(0) @map("end_date")
   end_date_text           String?              @dsire.VarChar(255)
   summary                 String?              @dsire.Text
   additional_technologies String?              @dsire.Text
@@ -164,9 +164,9 @@ model program {
   authority               authority[]
   parameter_set           parameter_set[]
   implementing_sector     implementing_sector  @relation(fields: [implementing_sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_implementing_sector1")
-  program_category        program_category     @relation(fields: [program_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_program_category1")
-  program_type            program_type         @relation(fields: [program_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_program_type1")
-  state                   state                @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_state1")
+  programCategory         ProgramCategory      @relation(fields: [programCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_program_category1")
+  programType             ProgramType          @relation(fields: [program_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_program_type1")
+  state                   State                @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_state1")
   user                    user                 @relation(fields: [created_by_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_user1")
   program_city            program_city[]
   program_contact         program_contact[]
@@ -176,28 +176,32 @@ model program {
   program_sector          program_sector[]
   program_technology      program_technology[]
   program_utility         program_utility[]
-  program_zipcode         program_zipcode[]
+  zips                    ProgramZip[]
   subscription_memo       subscription_memo[]
 
   @@index([implementing_sector_id], map: "fk_program_implementing_sector1_idx")
-  @@index([program_category_id], map: "fk_program_program_category1_idx")
+  @@index([programCategoryId], map: "fk_program_program_category1_idx")
   @@index([program_type_id], map: "fk_program_program_type1_idx")
   @@index([state_id], map: "fk_program_state1_idx")
   @@index([created_by_user_id], map: "fk_program_user1_idx")
   @@index([code], map: "ix_code")
+
+  @@map("program")
 }
 
-model program_category {
+model ProgramCategory {
   id           Int            @id @default(autoincrement()) @dsire.UnsignedInt
   name         String?        @dsire.VarChar(45)
-  program      program[]
-  program_type program_type[]
+  program      Program[]
+  program_type ProgramType[]
+
+  @@map("program_category")
 }
 
 model program_city {
   program_id Int     @dsire.UnsignedInt
   city_id    Int     @dsire.UnsignedInt
-  program    program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_city_program1")
+  program    Program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_city_program1")
   city       city    @relation(fields: [city_id], references: [id], onUpdate: Restrict, map: "program_city_ibfk_1")
 
   @@unique([city_id, program_id], map: "city_id")
@@ -210,7 +214,7 @@ model program_contact {
   contact_id Int     @dsire.UnsignedInt
   webvisible Boolean @default(false)
   contact    contact @relation(fields: [contact_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_contact_contact1")
-  program    program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_contact_program1")
+  program    Program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_contact_program1")
 
   @@index([contact_id], map: "fk_program_contact_contact1_idx")
   @@index([program_id], map: "fk_program_contact_program1_idx")
@@ -219,7 +223,7 @@ model program_contact {
 model program_county {
   program_id Int     @dsire.UnsignedInt
   county_id  Int     @dsire.UnsignedInt
-  program    program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_county_program1")
+  program    Program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_county_program1")
   county     county  @relation(fields: [county_id], references: [id], onUpdate: Restrict, map: "program_county_ibfk_1")
 
   @@unique([county_id, program_id], map: "county_id")
@@ -233,7 +237,7 @@ model program_detail {
   value                   String?                  @dsire.Text
   display_order           Int                      @default(0)
   template_id             Int?                     @dsire.UnsignedInt
-  program                 program                  @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_detail_program1")
+  program                 Program                  @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_detail_program1")
   program_detail_template program_detail_template? @relation(fields: [template_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "program_detail_ibfk_1")
 
   @@index([program_id], map: "fk_program_detail_program1")
@@ -246,7 +250,7 @@ model program_detail_template {
   label          String           @dsire.VarChar(255)
   display_order  Int              @default(0)
   program_detail program_detail[]
-  program_type   program_type     @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_detail_type1")
+  program_type   ProgramType     @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_detail_type1")
 
   @@index([type_id], map: "fk_program_detail_type1")
 }
@@ -257,7 +261,7 @@ model program_memo {
   added_by_user Int       @dsire.UnsignedInt
   added         DateTime? @dsire.DateTime(0)
   memo          String?   @dsire.Text
-  program       program   @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_memo_program1")
+  program       Program   @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_memo_program1")
   user          user      @relation(fields: [added_by_user], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_memo_user1")
 
   @@index([program_id], map: "fk_program_memo_program1_idx")
@@ -267,7 +271,7 @@ model program_memo {
 model program_sector {
   program_id Int     @dsire.UnsignedInt
   sector_id  Int     @dsire.UnsignedInt
-  program    program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_sector_program1")
+  program    Program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_sector_program1")
   sector     sector  @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_sector_sector1")
 
   @@id([program_id, sector_id])
@@ -278,7 +282,7 @@ model program_sector {
 model program_technology {
   program_id    Int        @dsire.UnsignedInt
   technology_id Int        @dsire.UnsignedInt
-  program       program    @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_technology_program1")
+  program       Program    @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_technology_program1")
   technology    technology @relation(fields: [technology_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_technology_technology1")
 
   @@id([program_id, technology_id])
@@ -286,21 +290,23 @@ model program_technology {
   @@index([technology_id], map: "fk_program_technology_technology1_idx")
 }
 
-model program_type {
+model ProgramType {
   id                      Int                       @id @default(autoincrement()) @dsire.UnsignedInt
   name                    String?                   @dsire.VarChar(45)
   program_category_id     Int                       @dsire.UnsignedInt
-  program                 program[]
+  program                 Program[]
   program_detail_template program_detail_template[]
-  program_category        program_category          @relation(fields: [program_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_type_program_category1")
+  program_category        ProgramCategory          @relation(fields: [program_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_type_program_category1")
 
   @@index([program_category_id], map: "fk_program_type_program_category1_idx")
+
+  @@map("program_type")
 }
 
 model program_utility {
   program_id Int     @dsire.UnsignedInt
   utility_id Int     @dsire.UnsignedInt
-  program    program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_utility_program1")
+  program    Program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_utility_program1")
   utility    utility @relation(fields: [utility_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_program_utility_utility1")
 
   @@id([program_id, utility_id])
@@ -308,15 +314,17 @@ model program_utility {
   @@index([utility_id], map: "fk_program_utility_utility1_idx")
 }
 
-model program_zipcode {
+model ProgramZip {
   program_id Int     @dsire.UnsignedInt
   zipcode_id Int     @dsire.UnsignedInt
-  program    program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "program_zipcode_ibfk_1")
-  zipcode    zipcode @relation(fields: [zipcode_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "program_zipcode_ibfk_2")
+  program    Program @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "program_zipcode_ibfk_1")
+  zip        Zip     @relation(fields: [zipcode_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "program_zipcode_ibfk_2")
 
   @@id([program_id, zipcode_id])
   @@index([program_id], map: "program_id")
   @@index([zipcode_id], map: "zipcode_id")
+
+  @@map("program_zipcode")
 }
 
 model search_log {
@@ -341,7 +349,7 @@ model sector {
   @@index([parent_id], map: "parent_id")
 }
 
-model state {
+model State {
   id                      Int                       @id @default(autoincrement()) @dsire.UnsignedInt
   abbreviation            String                    @dsire.Char(2)
   name                    String                    @dsire.VarChar(45)
@@ -349,13 +357,14 @@ model state {
   city                    city[]
   contact                 contact[]
   county                  county[]
-  program                 program[]
+  program                 Program[]
   state_info_content      state_info_content?
   technology_info_content technology_info_content[]
   utility                 utility[]
-  zipcode                 zipcode[]
+  zipcode                 Zip[]
 
   @@index([abbreviation], map: "abbreviation")
+  @@map("state")
 }
 
 model state_info_content {
@@ -367,7 +376,7 @@ model state_info_content {
   organizations                String? @dsire.Text
   programs                     String? @dsire.Text
   footnotes                    String? @dsire.Text
-  state                        state   @relation(fields: [state_id], references: [id], onDelete: Cascade, map: "state_info_content_ibfk_1")
+  state                        State   @relation(fields: [state_id], references: [id], onDelete: Cascade, map: "state_info_content_ibfk_1")
 }
 
 model subscription_memo {
@@ -376,7 +385,7 @@ model subscription_memo {
   added_by_user Int       @dsire.UnsignedInt
   added         DateTime? @dsire.DateTime(0)
   memo          String?   @dsire.Text
-  program       program   @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_subscription_memo_program1")
+  program       Program   @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_subscription_memo_program1")
   user          user      @relation(fields: [added_by_user], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_subscription_memo_user1")
 
   @@index([program_id], map: "fk_subscription_memo_program1_idx")
@@ -414,7 +423,7 @@ model technology_info_content {
   technology_details String? @dsire.Text
   programs           String? @dsire.Text
   footnotes          String? @dsire.Text
-  state              state   @relation(fields: [state_id], references: [id], onDelete: Cascade, map: "technology_info_content_ibfk_1")
+  state              State   @relation(fields: [state_id], references: [id], onDelete: Cascade, map: "technology_info_content_ibfk_1")
 
   @@unique([state_id, technology_filter], map: "state_id")
 }
@@ -431,7 +440,7 @@ model user {
   state             String?             @default("active") @dsire.Char(8)
   created_ts        DateTime?           @default(now()) @dsire.Timestamp(0)
   updated_ts        DateTime?           @dsire.Timestamp(0)
-  program           program[]
+  program           Program[]
   program_memo      program_memo[]
   subscription_memo subscription_memo[]
 
@@ -445,7 +454,7 @@ model utility {
   state_id        Int               @dsire.UnsignedInt
   utility_id      Int
   program_utility program_utility[]
-  state           state             @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utility_state1")
+  state           State             @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utility_state1")
   utility_zipcode utility_zipcode[]
 
   @@index([state_id], map: "fk_utility_state1_idx")
@@ -455,28 +464,30 @@ model utility_zipcode {
   utility_id Int     @dsire.UnsignedInt
   zipcode_id Int     @dsire.UnsignedInt
   utility    utility @relation(fields: [utility_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utility_zipcode_utility1")
-  zipcode    zipcode @relation(fields: [zipcode_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utility_zipcode_zipcode1")
+  zipcode    Zip     @relation(fields: [zipcode_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utility_zipcode_zipcode1")
 
   @@id([utility_id, zipcode_id])
   @@index([utility_id], map: "fk_utility_zipcode_utility1_idx")
   @@index([zipcode_id], map: "fk_utility_zipcode_zipcode1_idx")
 }
 
-model zipcode {
+model Zip {
   id              Int               @id @default(autoincrement()) @dsire.UnsignedInt
-  zipcode         String            @unique(map: "zipcode") @dsire.VarChar(16)
+  code            String            @unique(map: "zipcode") @dsire.VarChar(16) @map("zipcode")
   city_id         Int               @dsire.UnsignedInt
   state_id        Int               @dsire.UnsignedInt
   county_id       Int               @dsire.UnsignedInt
   latitude        Decimal?          @dsire.Decimal(10, 0)
   longitude       Decimal?          @dsire.Decimal(10, 0)
-  program_zipcode program_zipcode[]
+  program_zipcode ProgramZip[]
   utility_zipcode utility_zipcode[]
   city            city              @relation(fields: [city_id], references: [id], onUpdate: Restrict, map: "fk_zipcode_city1")
   county          county            @relation(fields: [county_id], references: [id], onUpdate: Restrict, map: "fk_zipcode_county1")
-  state           state             @relation(fields: [state_id], references: [id], onUpdate: Restrict, map: "fk_zipcode_state1")
+  state           State             @relation(fields: [state_id], references: [id], onUpdate: Restrict, map: "fk_zipcode_state1")
 
   @@index([city_id], map: "fk_zipcode_city1")
   @@index([county_id], map: "fk_zipcode_county1")
   @@index([state_id], map: "fk_zipcode_state1")
+
+  @@map("zipcode")
 }

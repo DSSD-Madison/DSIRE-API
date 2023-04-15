@@ -16,7 +16,7 @@ function genRsaOaep256(len = 2048) {
 
 
 const keys = await genRsaOaep256();
-console.log("RSA-OAEP/SHA-256 4096-bit public key (JWK):");
+console.log("RSA-OAEP/SHA-256 2048-bit public key (JWK):");
 console.log(JSON.stringify(await SubtleCrypto.exportKey("jwk", keys.publicKey)))
-console.log("RSA-OAEP/SHA-256 4096-bit private key (JWK):");
+console.log("RSA-OAEP/SHA-256 2048-bit private key (JWK):");
 console.log(JSON.stringify(await SubtleCrypto.exportKey("jwk", keys.privateKey)))
