@@ -2,6 +2,7 @@ name: AWS Deploy
 run-name: Build and deploy on AWS
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -123,7 +124,6 @@ jobs:
     environment: AWS_Development
     needs:
       - get-name
-      - sync-package
     env:
       NAME: ${{ needs.get-name.outputs.NAME }}
       STACK_NAME: DsireApi-${{ needs.get-name.outputs.NAME }}
@@ -150,7 +150,9 @@ jobs:
       environment: AWS_Development
       needs:
         - get-name
+        - sync-package
         - deploy-handler
+        - sync-environment-lambda
       env:
         PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
         HANDLER_NAME: DsireApi_${{ needs.get-name.outputs.NAME }}
@@ -174,7 +176,7 @@ jobs:
     environment: AWS_Development
     needs:
       - get-name
-      - deploy-package
+      - deploy-handler
     env:
       NAME: ${{ needs.get-name.outputs.NAME }}
       HANDLER_NAME: DsireApi_${{ needs.get-name.outputs.NAME }}
@@ -194,41 +196,38 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-      - name: Get root API URL (for setting $ROOT_API_URL)
+      - name: Get root API URL (for setting $API_URL)
         run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
 
       - name: Sync all environment secrets with Lambda handlers
         env:
+          API_URL: ${{ env.ROOT_API_URL }}/${{ env.NAME }}
           APPROVER_EMAIL: ${{ env.APPROVER_EMAIL }}
           DB_URI: ${{ secrets.DB_URI }}
           IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
-          NAME: ${{ env.NAME }}
           NODE_OPTIONS: ${{ vars.NODE_OPTIONS }}
           PUBLIC_KEY: ${{ vars.PUBLIC_KEY_JWK }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY_JWK }}
-          ROOT_API_URL: ${{ env.ROOT_API_URL }}
           SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
           aws lambda update-function-configuration \
               --function-name="${HANDLER_NAME}" \
-              --environment "Variables={APPROVER_EMAIL='${APPROVER_EMAIL}',
+              --environment "Variables={API_URL='${API_URL}',
+                                        APPROVER_EMAIL='${APPROVER_EMAIL}',
                                         DB_URI='${DB_URI}',
                                         IDENTITY_EMAIL='${IDENTITY_EMAIL}',
-                                        NAME='${NAME}',
                                         NODE_OPTIONS='${NODE_OPTIONS}',
                                         PUBLIC_KEY='${PUBLIC_KEY}',
                                         PRIVATE_KEY='${PRIVATE_KEY}',
-                                        ROOT_API_URL='${ROOT_API_URL}',
                                         SIGNING_SECRET='${SIGNING_SECRET}',
                                         SMTP_USERNAME='${SMTP_USERNAME}',
                                         SMTP_PASSWORD='${SMTP_PASSWORD}'}" > /dev/null
           aws lambda wait function-updated --function-name "${HANDLER_NAME}"
 
-
-  render-sync-content:
-    name: Render content to S3
+  build-content:
+    name: Build static content
     runs-on: ubuntu-latest
     environment: AWS_Development
     needs: get-name
@@ -239,13 +238,37 @@ jobs:
       - name: Checkout branch ${{ github.ref_name }}
         uses: actions/checkout@v3
 
+      - name: Install Node.js version ${{ vars.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ vars.NODE_VERSION }}
+
+      - name: Set NODE_ENV for production
+        run: echo "NODE_ENV=production" >> $GITHUB_ENV
+        if: github.ref_name == 'main'
+      - name: Set NODE_ENV for development
+        run: echo "NODE_ENV=development" >> $GITHUB_ENV
+        if: github.ref_name != 'main'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build CSS
+        working-directory: frontend
+        run: npm run build-css
+
+      - name: Build GraphiQL
+        working-directory: frontend
+        run: npm run build-graphiql
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-      - name: Get root API URL as $ROOT_API_URL (for templating {% API_URL %})
+      - name: Get root API URL (for rendering {% API_URL %})
         run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
 
       - name: Render content
@@ -260,7 +283,7 @@ jobs:
           TOKENS_REPLACEMENTS[{% COMMIT_HASH_SHORT %}]=""
           if [[ ${{ github.ref_name }} != 'main' ]]; then
               TOKENS_REPLACEMENTS[{% STAGE %}]="${{ github.ref_name }}"
-              TOKENS_REPLACEMENTS[{% COMMIT_HASH_SHORT %}]="${GITHUB_SHA:0:7}"
+              TOKENS_REPLACEMENTS[{% COMMIT_HASH_SHORT %}]=${GITHUB_SHA:0:7}
           fi
           TOKENS_REPLACEMENTS[{% API_URL %}]="${ROOT_API_URL}"/${NAME}
           shopt -s globstar
@@ -276,7 +299,29 @@ jobs:
           name: frontend_${{ env.NAME }}
           path: dist/frontend/*
 
-      - name: Render and sync content with S3
-        working-directory: dist/frontend
+  sync-content:
+    name: Sync content with S3
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs:
+      - get-name
+      - build-content
+    env:
+      NAME: ${{ needs.get-name.outputs.NAME }}
+
+    steps:
+
+      - name: Download content as artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend_${{ env.NAME }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Sync content with S3
         run: |
           aws s3 sync --delete . s3://${{ vars.HOSTING_BUCKET }}/${NAME}/

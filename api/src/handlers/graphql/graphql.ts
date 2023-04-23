@@ -12,6 +12,9 @@ export type GraphQLContext = {
 
 export default async function graphql(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
+    // TODO check bad body
+    const {query, operationName, variableValues} = JSON.parse(event.body as any)
+
     return {
         headers: {
             ...CORS_HEADERS,
@@ -23,8 +26,9 @@ export default async function graphql(event: APIGatewayProxyEvent): Promise<APIG
             contextValue: {
                 prisma: new PrismaClient()
             },
-            // TODO check bad body
-            source: event.body || ""
+            source: query,
+            operationName,
+            variableValues
         }))
     }
 }

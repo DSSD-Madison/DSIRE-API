@@ -19,7 +19,7 @@ document.getElementById("submit").addEventListener("click", async e => {
 
     document.getElementById("sash").classList.add("reveal-status");
 
-    const response = await fetch(`${document.getElementById("API_URL").innerHTML}/register`, {
+    const response = await fetch(`${document.getElementById("API_URL").innerText}/register`, {
         method: "POST",
         headers: {
             "content-type": "application/json"

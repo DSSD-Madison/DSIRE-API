@@ -21,8 +21,8 @@ Parameters:
   Name:
     Type: String
     Description: >
-      The name of the handler is used to retrieve its deployment package
-      (api-$NAME.zip), set its stage on the API Gateway, and to set descriptions.
+      The name of the handler is used to associate it with a corresponding
+      stage on the API Gateway.
 
 
 
@@ -37,9 +37,7 @@ Resources:
                      - NAME: !Ref Name
       Code:
         S3Bucket: !ImportValue PackageBucketName
-        S3Key: !Sub
-                 - "api_${NAME}.zip"
-                 - NAME: !Ref Name
+        S3Key: "default-code.zip"
       PackageType: Zip
       Runtime: nodejs18.x
       Handler: index.handler
