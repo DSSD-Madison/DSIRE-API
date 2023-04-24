@@ -1,4 +1,11 @@
 *.pem
+meta.json
+
+graphiql.js
+graphiql.css
+
+dist/api
+dist/frontend/styles
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,node
@@ -144,7 +151,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/

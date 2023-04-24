@@ -1,0 +1,19 @@
+{
+  "name": "dsire-api-fe",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DSSD-Madison/DSIRE-API.git",
+    "directory": "frontend/"
+  },
+  "scripts": {
+    "build-css": "esbuild styles/root.css styles/registration.css styles/demo.css --bundle --minify --outdir=../dist/frontend/styles/",
+    "build-graphiql": "esbuild src/graphiql.jsx --bundle --minify --outdir=../dist/frontend/scripts/"
+  },
+  "dependencies": {
+    "esbuild": "^0.17.18",
+    "graphiql": "^2.4.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

@@ -1,0 +1,93 @@
+name: AWS Undeploy
+run-name: Remove deployment from AWS
+
+on:
+  delete:
+  workflow_dispatch:
+
+# Required for aws-actions/configure-aws-credentials
+permissions:
+  id-token: write
+  contents: read
+
+
+jobs:
+
+  get-name:
+      name: Generate deployment name
+      runs-on: ubuntu-latest
+      environment: AWS_Development
+      outputs:
+        NAME: ${{ steps.get-name.outputs.NAME }}
+
+      steps:
+
+        - name: Generate deployment name for branch ${{ github.ref_name }}
+          id: get-name
+          if: github.event.ref_type == 'branch'
+          run: echo "NAME=$(echo "${{ github.ref_name }}" | sed "${{ env.SED_REF_NAME }}")" >> $GITHUB_OUTPUT
+
+
+  unsync-package:
+    name: Delete S3 API package
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs: get-name
+    env:
+      PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
+
+    steps:
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        if: github.event.ref_type == 'branch'
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Remove package from S3
+        if: github.event.ref_type == 'branch'
+        run: aws s3 rm s3://${{ vars.PACKAGE_BUCKET }}/${PACKAGE_NAME}.zip
+
+  undeploy-handler:
+    name: Remove Lambda handler
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs:
+      - get-name
+    env:
+      STACK_NAME: DsireApi-${{ needs.get-name.outputs.NAME }}
+
+    steps:
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        if: github.event.ref_type == 'branch'
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Remove handler stack
+        if: github.event.ref_type == 'branch'
+        run: aws cloudformation delete-stack --stack-name ${STACK_NAME}
+
+  delete-content:
+    name: Delete S3 content
+    runs-on: ubuntu-latest
+    environment: AWS_Development
+    needs: get-name
+    env:
+      NAME: ${{ needs.get-name.outputs.NAME }}
+
+    steps:
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        if: github.event.ref_type == 'branch'
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Remove hosted content from S3
+        if: github.event.ref_type == 'branch'
+        run: aws s3 rm --recursive s3://${{ vars.HOSTING_BUCKET }}/${NAME}

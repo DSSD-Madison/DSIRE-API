@@ -1,4 +1,4 @@
-import HTML from "./html.mjs"
+import HTML from "./html"
 
 
 export default (accessToken: string, revocationLink: string): string => HTML`
