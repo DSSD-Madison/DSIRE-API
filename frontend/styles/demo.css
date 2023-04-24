@@ -27,7 +27,7 @@ body {
   container: meta / size;
   display: flex;
   flex-flow: column nowrap;
-  justify-content: center;
+  /*justify-content: center;*/
   align-items: left;
 }
 @container meta (height) {
@@ -36,7 +36,7 @@ body {
       letter-spacing: -2cqh;
   }
   #subtitle {
-      margin-top: -12cqh;
+      margin-top: -30cqh;
       font-size: min(10cqh, 5cqw);
   }
 }
@@ -108,3 +108,23 @@ body {
     padding: 5px;
     border-radius: 10px;
   }
+
+  a:link {
+    text-decoration: none;
+    color: lightgray;
+  }
+
+  a:visited {
+    text-decoration: none;
+    color:rgb(88, 88, 88);
+  }
+
+  a:hover {
+    text-decoration: none;
+  }
+
+  a:active {
+    text-decoration: none;
+  
+}
+h2 {display: inline;}

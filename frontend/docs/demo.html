@@ -11,6 +11,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=PT+Sans:wght@700&display=swap">
 
+    <script
+      src="https://unpkg.com/react@17/umd/react.development.js"
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"
+    ></script>
 
     <title>DSIRE API Documentation</title>
 </head>
@@ -18,13 +24,18 @@
 <body>
     <div id="meta">
         <h1 id="DSIRE">DSIRE API Documentation</h1>
+        <h2 id="subtitle">Register for an API token <a href="../registration.html">here</a>.</h2>
         <!--<span>
             <img src="../images/dsire.png">
             <img src="../images/ncce.png">
         </span>-->
+        <div id="navbar">
+            <span><a href="#rest_docs"><h2 style="color:lightgrey">REST ENDPOINT</h2></a>
+            <a href="#graphql_docs"><h2 style="color:lightgrey">GRAPHQL ENDPOINT</h2></a>
+            <a href="#graphql_demo"><h2 style="color:lightgrey">GRAPHQL DEMO</h2></a></span>
+        </div>
     </div>
     <div id="content">
-        <h2>Register for a API token <a href="../registration.html">here</a>.</h2>
         <div>
             <span>
                 <h2><span class="method">GET</span> /graphql: <i style="color:lightgrey">Allows users to ask our database for exactly what they need</i></h2>
@@ -37,6 +48,9 @@
             </div>
             <h4 class="subheader">TRY THE ENDPOINT HERE!</h4>
             <embed type="text/html" src="../graphiql.html" width="100%" height="800">
+        </div>
+            
+        <div id="rest_doc">
             <span>
                 <h2><span class="method">GET</span> /query: <i style="color:lightgrey">The primary REST endpoint for querying the API</i></h2>
             </span>
