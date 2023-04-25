@@ -16,9 +16,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
         },
         statusCode: 200,
         body: JSON.stringify({
-            q: query,
-            opName: operationName,
-            varVal: variableValues
+            q: "hi"
         })
     }
 
