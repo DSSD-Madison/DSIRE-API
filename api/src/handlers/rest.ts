@@ -7,7 +7,7 @@ import schema from "./graphql/schema"
 
 export default async function rest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
-    const {query, operationName, variableValues} = JSON.parse(event.body as any)
+    //const {query, operationName, variableValues} = JSON.parse(event.body as any)
 
     return {
         headers: {
@@ -15,9 +15,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             "content-type": "application/json"
         },
         statusCode: 200,
-        body: JSON.stringify({
-            q: "hi"
-        })
+        body: event.body || ' '
     }
 
     /*return {
