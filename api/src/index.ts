@@ -22,6 +22,9 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent): P
         case "/graphql":
             return handlers.graphql(event);
 
+        case "/query":
+            return handlers.rest(event);
+
         case "/register":
             return handlers.register(event);
 
