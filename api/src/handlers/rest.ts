@@ -8,7 +8,7 @@ import schema from "./graphql/schema"
 
 export default async function rest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
-    if(event.queryStringParameters == null){
+    /*if(event.queryStringParameters == null){
         return {
             headers: {
                 ...CORS_HEADERS,
@@ -20,7 +20,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
                 source: ""
             }))
         }
-    }
+    }*/
 
     const received_event = JSON.stringify(event,null,2);
     const data_arr = JSON.parse(received_event);
