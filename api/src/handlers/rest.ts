@@ -8,6 +8,27 @@ import schema from "./graphql/schema"
 
 export default async function rest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
+    const received_event = JSON.stringify(event,null,2)
+
+    /*if(event.queryStringParameters == undefined){
+        return {
+            headers: {
+                ...CORS_HEADERS,
+                "content-type": "application/json"
+            },
+            statusCode: 200,
+            body: JSON.stringify(await GraphQL({
+                schema: schema,
+                source: ""
+            }))
+        }
+    }
+    else{
+        const params = event.queryStringParameters.split(',').slice(1).join(',');
+    }
+
+    
+
     const data = z.object({
         states: z.string().optional(),
         category: z.string().optional(),
@@ -18,7 +39,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
     const parsed_data = (inputs: unknown) => {
         const parsed = data.parse(event.queryStringParameters);
         return parsed;
-    }
+    }*/
 
     const params = event.queryStringParameters
 
@@ -32,7 +53,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             "content-type": "application/json"
         },
         statusCode: 200,
-        body: JSON.stringify(params) || ' '
+        body: received_event || ' '
     }
 
     /*return {
