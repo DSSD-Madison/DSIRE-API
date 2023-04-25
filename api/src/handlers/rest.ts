@@ -8,9 +8,7 @@ import schema from "./graphql/schema"
 
 export default async function rest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
-    const received_event = JSON.stringify(event,null,2)
-
-    /*if(event.queryStringParameters == undefined){
+    if(event.queryStringParameters == null){
         return {
             headers: {
                 ...CORS_HEADERS,
@@ -23,13 +21,24 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             }))
         }
     }
-    else{
-        const params = event.queryStringParameters.split(',').slice(1).join(',');
+
+    const received_event = JSON.stringify(event,null,2)
+    const params_arr = received_event.match(new RegExp('"queryStringParameters": {[\s\S]+?}'))
+    const params = params_arr ? params_arr[0] : ""
+
+
+    return {
+        headers: {
+            ...CORS_HEADERS,
+            "content-type": "application/json"
+        },
+        statusCode: 200,
+        body: params || ' '
     }
 
     
 
-    const data = z.object({
+    /*const data = z.object({
         states: z.string().optional(),
         category: z.string().optional(),
         pageSize: z.string().optional(),
@@ -41,20 +50,9 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
         return parsed;
     }*/
 
-    const params = event.queryStringParameters
-
     //const formData = event.safeParse(typeof(event.queryStringParameters) === "string" ? JSON.parse(event.queryStringParameters) : event.queryStringParameters);
     //const {query, operationName, variableValues} = JSON.parse(event.body as any)
     
-
-    return {
-        headers: {
-            ...CORS_HEADERS,
-            "content-type": "application/json"
-        },
-        statusCode: 200,
-        body: received_event || ' '
-    }
 
     /*return {
         headers: {
