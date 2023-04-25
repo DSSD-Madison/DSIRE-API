@@ -24,8 +24,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
 
     const received_event = JSON.stringify(event,null,2)
     const params_arr = received_event.match(new RegExp('"queryStringParameters": {[\s\S]+?}'))
-    const params = params_arr ? params_arr[0] : ""
-
+    const params = params_arr ? params_arr[0] : "hi"
 
     return {
         headers: {
