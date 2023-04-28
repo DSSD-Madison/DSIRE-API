@@ -9,7 +9,8 @@ import schema from "./graphql/schema"
 export default async function rest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
     const params = JSON.stringify(event.queryStringParameters);
-    var re = /".*":\s".*"/g;
+    const re = new RegExp('".*":\s".*"', 'g');
+    //console.log('2016-01-02|2019-03-07'.matchAll(re));
     let m = re.exec(params);
     let m_str = m?.toString();
     /*if(event.queryStringParameters == null){
