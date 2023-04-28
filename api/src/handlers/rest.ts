@@ -8,8 +8,17 @@ import schema from "./graphql/schema"
 
 export default async function rest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
-    const params = JSON.stringify(event.queryStringParameters);
-    const matches = params.split('"');
+    const param_str = JSON.stringify(event.queryStringParameters);
+    let params = [['place','holders']];
+    JSON.parse(param_str, (key, value) => {
+        params.push([key,value])
+    });
+    /*const values = params.split('"');
+    for(var idx = 0; idx < values.length; idx++){
+        if(values[idx] == "states"){
+
+        }
+    }*/
     /*if(event.queryStringParameters == null){
         return {
             headers: {
@@ -30,7 +39,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             "content-type": "application/json"
         },
         statusCode: 200,
-        body: matches[0] || ' '
+        body: params[0].toString() || ' '
     }
 
     
