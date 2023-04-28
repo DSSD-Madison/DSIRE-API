@@ -23,6 +23,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
     }*/
 
     //const received_event = JSON.stringify(event,null,2);
+    const params = JSON.stringify(event.queryStringParameters)
     //const data_arr = JSON.parse(received_event);
     //const data = data_arr["queryStringParameters"];
     //const params_arr = received_event.match('"queryStringParameters": {[\s\S]+?}')
@@ -34,7 +35,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             "content-type": "application/json"
         },
         statusCode: 200,
-        body: event.body || ' '
+        body: params || ' '
     }
 
     
