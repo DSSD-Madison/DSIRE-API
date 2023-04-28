@@ -13,6 +13,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
     JSON.parse(param_str, (key, value) => {
         params.push([key,value])
     });
+
     /*const values = params.split('"');
     for(var idx = 0; idx < values.length; idx++){
         if(values[idx] == "states"){
@@ -39,7 +40,7 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             "content-type": "application/json"
         },
         statusCode: 200,
-        body: params[1].toString() || ' '
+        body: params.toString() || ' '
     }
 
     
