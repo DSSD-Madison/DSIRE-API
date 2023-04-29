@@ -47,8 +47,16 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             }
         }
     }
-
     return {
+        headers: {
+            ...CORS_HEADERS,
+            "content-type": "application/json"
+        },
+        statusCode: 200,
+        body: query || ""
+    }
+
+    /*return {
         headers: {
             ...CORS_HEADERS,
             "content-type": "application/json"
@@ -63,5 +71,5 @@ export default async function rest(event: APIGatewayProxyEvent): Promise<APIGate
             "GET",
             null
         }))
-    }
+    }*/
 }
