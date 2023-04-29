@@ -14,40 +14,48 @@ permissions:
 jobs:
 
   get-name:
-      name: Generate deployment name
+      name: Get deployment names
       runs-on: ubuntu-latest
       environment: AWS_Development
       outputs:
         NAME: ${{ steps.get-name.outputs.NAME }}
+        PACKAGE_NAME: api_${{ steps.get-name.outputs.NAME }}
+        EXT_DEPS_PACKAGE_NAME: api-ext-deps_${{ steps.get-name.outputs.NAME }}
+        HANDLER_NAME: DsireApi_${{ steps.get-name.outputs.NAME }}
+        HANDLER_STACK_NAME: DsireApi-${{ steps.get-name.outputs.NAME }}
 
       steps:
 
-        - name: Generate deployment name for branch ${{ github.ref_name }}
+        - name: Generate deployment names for branch ${{ github.ref_name }} (${{ github.event.ref }})
           id: get-name
-          if: github.event.ref_type == 'branch'
-          run: echo "NAME=$(echo "${{ github.ref_name }}" | sed "${{ env.SED_REF_NAME }}")" >> $GITHUB_OUTPUT
+          env:
+            SED_REF_NAME: s~refs/heads/~~g; s~\.~-~g; s~_~-~g; s~/~-~g
+          run: |
+            NAME=$(echo "${{ github.ref_name }}" | sed "${SED_REF_NAME}")
+            echo "NAME=${NAME}" >> $GITHUB_OUTPUT
+          if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
 
 
   unsync-package:
-    name: Delete S3 API package
+    name: Delete S3 packages
     runs-on: ubuntu-latest
     environment: AWS_Development
     needs: get-name
-    env:
-      PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
 
     steps:
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
-        if: github.event.ref_type == 'branch'
+        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-      - name: Remove package from S3
-        if: github.event.ref_type == 'branch'
-        run: aws s3 rm s3://${{ vars.PACKAGE_BUCKET }}/${PACKAGE_NAME}.zip
+      - name: Remove packages from S3
+        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
+        run: |
+          aws s3 rm s3://${{ vars.PACKAGE_BUCKET }}/${{ needs.get-name.outputs.PACKAGE_NAME }}.zip
+          aws s3 rm s3://${{ vars.PACKAGE_BUCKET }}/${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}.zip
 
   undeploy-handler:
     name: Remove Lambda handler
@@ -55,39 +63,35 @@ jobs:
     environment: AWS_Development
     needs:
       - get-name
-    env:
-      STACK_NAME: DsireApi-${{ needs.get-name.outputs.NAME }}
 
     steps:
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
-        if: github.event.ref_type == 'branch'
+        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
       - name: Remove handler stack
-        if: github.event.ref_type == 'branch'
-        run: aws cloudformation delete-stack --stack-name ${STACK_NAME}
+        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
+        run: aws cloudformation delete-stack --stack-name ${{ needs.get-name.outputs.HANDLER_STACK_NAME }}
 
   delete-content:
     name: Delete S3 content
     runs-on: ubuntu-latest
     environment: AWS_Development
     needs: get-name
-    env:
-      NAME: ${{ needs.get-name.outputs.NAME }}
 
     steps:
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
-        if: github.event.ref_type == 'branch'
+        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
       - name: Remove hosted content from S3
-        if: github.event.ref_type == 'branch'
-        run: aws s3 rm --recursive s3://${{ vars.HOSTING_BUCKET }}/${NAME}
+        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
+        run: aws s3 rm --recursive s3://${{ vars.HOSTING_BUCKET }}/${{ needs.get-name.outputs.NAME }}

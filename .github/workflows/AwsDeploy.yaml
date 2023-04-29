@@ -17,19 +17,25 @@ permissions:
 jobs:
 
   get-name:
-      name: Generate deployment name
+      name: Get deployment names
       runs-on: ubuntu-latest
       environment: AWS_Development
       outputs:
         NAME: ${{ steps.get-name.outputs.NAME }}
+        PACKAGE_NAME: api_${{ steps.get-name.outputs.NAME }}
+        EXT_DEPS_PACKAGE_NAME: api-ext-deps_${{ steps.get-name.outputs.NAME }}
+        HANDLER_NAME: DsireApi_${{ steps.get-name.outputs.NAME }}
+        HANDLER_STACK_NAME: DsireApi-${{ steps.get-name.outputs.NAME }}
 
       steps:
 
-        - name: Generate deployment name for branch ${{ github.ref_name }}
+        - name: Generate deployment names for branch ${{ github.ref_name }} (${{ github.event.ref }})
           id: get-name
           env:
-            SED_REF_NAME: s~\.~-~g; s~_~-~g; s~/~-~g
-          run: echo "NAME=$(echo "${{ github.ref_name }}" | sed "${SED_REF_NAME}")" >> $GITHUB_OUTPUT
+            SED_REF_NAME: s~refs/heads/~~g; s~\.~-~g; s~_~-~g; s~/~-~g
+          run: |
+            NAME=$(echo "${{ github.ref_name }}" | sed "${SED_REF_NAME}")
+            echo "NAME=${NAME}" >> $GITHUB_OUTPUT
 
 
   build-package:
@@ -37,8 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: AWS_Development
     needs: get-name
-    env:
-      PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
 
     steps:
       - name: Checkout branch ${{ github.ref_name }}
@@ -74,40 +78,50 @@ jobs:
         run: npm run build
         if: github.ref_name != 'main'
 
-      - name: Copy Prisma client to distribution context
+      - name: Copy Prisma client (external dependencies) to distribution context in AWS hierarchy
         run: |
-          mkdir -p dist/api/node_modules && cp -r api/node_modules/{@prisma,.prisma} dist/api/node_modules/
+          mkdir -p dist/api/nodejs/node18/node_modules && cp -r api/node_modules/{@prisma,.prisma} dist/api/nodejs/node18/node_modules/
 
       - name: Remove extraneous native Prisma query engines
-        working-directory: dist/api/node_modules/.prisma/client
+        working-directory: dist/api/nodejs/node18/node_modules/.prisma/client
         run: rm libquery_engine-debian*
 
-      - name: Zip API package ${{ env.PACKAGE_NAME }}
+      - name: Zip API package ${{ needs.get-name.outputs.PACKAGE_NAME }}
         working-directory: dist/api
-        run: zip -9 -r ../${PACKAGE_NAME}.zip .
+        run: zip -9 ../${{ needs.get-name.outputs.PACKAGE_NAME }}.zip index.cjs
+      - name: Zip external dependency package ${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}
+        working-directory: dist/api
+        run: zip -9 -r ../${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}.zip nodejs
 
       - name: Upload API package as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.PACKAGE_NAME }}
-          path: dist/${{ env.PACKAGE_NAME }}.zip
+          name: ${{ needs.get-name.outputs.PACKAGE_NAME }}
+          path: dist/${{ needs.get-name.outputs.PACKAGE_NAME }}.zip
+      - name: Upload external dependency package as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}
+          path: dist/${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}.zip
 
-  sync-package:
-    name: Sync API package with S3
+  sync-packages:
+    name: Sync packages with S3
     runs-on: ubuntu-latest
     environment: AWS_Development
     needs:
       - get-name
       - build-package
-    env:
-      PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
 
     steps:
 
       - name: Download API package as artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.PACKAGE_NAME }}
+          name: ${{ needs.get-name.outputs.PACKAGE_NAME }}
+      - name: Download external dependency package as artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -115,7 +129,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-      - name: Sync package with S3
+      - name: Sync packages with S3
         run: aws s3 sync --size-only . s3://${{ vars.PACKAGE_BUCKET }}
 
   deploy-handler:
@@ -124,9 +138,8 @@ jobs:
     environment: AWS_Development
     needs:
       - get-name
-    env:
-      NAME: ${{ needs.get-name.outputs.NAME }}
-      STACK_NAME: DsireApi-${{ needs.get-name.outputs.NAME }}
+    outputs:
+      API_URL: ${{ steps.get-root.outputs.ROOT_API_URL }}/${{ needs.get-name.outputs.NAME }}
 
     steps:
       - name: Checkout branch ${{ github.ref_name }}
@@ -142,20 +155,26 @@ jobs:
         working-directory: aws/CloudFormation
         env:
           CF_TAGS: prouduct=DsireApi
-        run: aws cloudformation deploy --template-file DsireApiHandler.yaml --parameter-overrides Name=${NAME} --stack-name ${STACK_NAME} --tags ${CF_TAGS} --no-fail-on-empty-changeset
+        run: |
+          aws cloudformation deploy --template-file DsireApiHandler.yaml \
+              --parameter-overrides Name=${{ needs.get-name.outputs.NAME }} \
+              --stack-name ${{ needs.get-name.outputs.HANDLER_STACK_NAME }} \
+              --tags ${CF_TAGS} --no-fail-on-empty-changeset
 
-  deploy-package:
+      - name: Get API URL (for handler environments & templating)
+        id: get-root
+        run: |
+          ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)
+          echo "ROOT_API_URL=${ROOT_API_URL}" >> $GITHUB_OUTPUT
+
+  deploy-api:
       name: Deploy API on Lambda
       runs-on: ubuntu-latest
       environment: AWS_Development
       needs:
         - get-name
-        - sync-package
+        - sync-packages
         - deploy-handler
-        - sync-environment-lambda
-      env:
-        PACKAGE_NAME: api_${{ needs.get-name.outputs.NAME }}
-        HANDLER_NAME: DsireApi_${{ needs.get-name.outputs.NAME }}
 
       steps:
 
@@ -165,10 +184,29 @@ jobs:
             aws-region: ${{ vars.AWS_REGION }}
             role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-        - name: Deploy package on Lambda
+        - name: Get old dependency layer ARN
+          # The handler name is the same as the layer name (DsireApiHandler.yaml)
+          # Have to query the old ARN this way as publish-layer-version doesn't want the versioned ARN
+          # But we can get the new (versioned) ARN from that command because update-function-configuration does :)
+          # So OLD_DEPENDENCIES_ARN is non-versioned layer ARN; DEPENDENCIES_ARN is versioned layer ARN
           run: |
-            aws lambda update-function-code --function-name="${HANDLER_NAME}" --s3-bucket ${{ vars.PACKAGE_BUCKET }} --s3-key ${PACKAGE_NAME}.zip > /dev/null
-            aws lambda wait function-updated --function-name="${HANDLER_NAME}"
+            OLD_DEPENDENCIES_ARN=$(aws lambda list-layers --query "Layers[?LayerName=='${{ needs.get-name.outputs.HANDLER_NAME }}'].LayerArn" --no-paginate --output text)
+            echo "OLD_DEPENDENCIES_ARN=${OLD_DEPENDENCIES_ARN}" >> $GITHUB_ENV
+
+        - name: Create new dependency layer version from package
+          run: |
+            DEPENDENCIES_ARN=$(aws lambda publish-layer-version \
+                --layer-name "${OLD_DEPENDENCIES_ARN}" \
+                --content S3Bucket=${{ vars.PACKAGE_BUCKET }},S3Key=${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}.zip \
+                --query LayerVersionArn --no-paginate --output text)
+            echo "DEPENDENCIES_ARN=${DEPENDENCIES_ARN}" >> $GITHUB_ENV
+
+        - name: Deploy API package on handler with new dependency layer
+          run: |
+            aws lambda update-function-code --function-name="${{ needs.get-name.outputs.HANDLER_NAME }}" --s3-bucket ${{ vars.PACKAGE_BUCKET }} --s3-key ${{ needs.get-name.outputs.PACKAGE_NAME }}.zip > /dev/null
+            aws lambda wait function-updated --function-name="${{ needs.get-name.outputs.HANDLER_NAME }}"
+            aws lambda update-function-configuration --function-name="${{ needs.get-name.outputs.HANDLER_NAME }}" --layers "${DEPENDENCIES_ARN}" > /dev/null
+            aws lambda wait function-updated --function-name="${{ needs.get-name.outputs.HANDLER_NAME }}"
 
   sync-environment-lambda:
     name: Sync secrets with Lambda
@@ -177,9 +215,7 @@ jobs:
     needs:
       - get-name
       - deploy-handler
-    env:
-      NAME: ${{ needs.get-name.outputs.NAME }}
-      HANDLER_NAME: DsireApi_${{ needs.get-name.outputs.NAME }}
+      - deploy-api
 
     steps:
 
@@ -196,12 +232,9 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-      - name: Get root API URL (for setting $API_URL)
-        run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
-
       - name: Sync all environment secrets with Lambda handlers
         env:
-          API_URL: ${{ env.ROOT_API_URL }}/${{ env.NAME }}
+          API_URL: ${{ needs.deploy-handler.outputs.API_URL }}
           APPROVER_EMAIL: ${{ env.APPROVER_EMAIL }}
           DB_URI: ${{ secrets.DB_URI }}
           IDENTITY_EMAIL: ${{ secrets.IDENTITY_EMAIL }}
@@ -213,7 +246,7 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
           aws lambda update-function-configuration \
-              --function-name="${HANDLER_NAME}" \
+              --function-name="${{ needs.get-name.outputs.HANDLER_NAME }}" \
               --environment "Variables={API_URL='${API_URL}',
                                         APPROVER_EMAIL='${APPROVER_EMAIL}',
                                         DB_URI='${DB_URI}',
@@ -224,13 +257,16 @@ jobs:
                                         SIGNING_SECRET='${SIGNING_SECRET}',
                                         SMTP_USERNAME='${SMTP_USERNAME}',
                                         SMTP_PASSWORD='${SMTP_PASSWORD}'}" > /dev/null
-          aws lambda wait function-updated --function-name "${HANDLER_NAME}"
+          aws lambda wait function-updated --function-name "${{ needs.get-name.outputs.HANDLER_NAME }}"
+
 
   build-content:
     name: Build static content
     runs-on: ubuntu-latest
     environment: AWS_Development
-    needs: get-name
+    needs:
+      - get-name
+      - deploy-handler
     env:
       NAME: ${{ needs.get-name.outputs.NAME }}
 
@@ -268,9 +304,6 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-      - name: Get root API URL (for rendering {% API_URL %})
-        run: echo "ROOT_API_URL=$(aws cloudformation list-exports --query "Exports[?Name=='ApiUrl'].Value" --no-paginate --output text)" >> $GITHUB_ENV
-
       - name: Render content
         working-directory: dist/frontend/
         # Templating: replace...
@@ -285,7 +318,7 @@ jobs:
               TOKENS_REPLACEMENTS[{% STAGE %}]="${{ github.ref_name }}"
               TOKENS_REPLACEMENTS[{% COMMIT_HASH_SHORT %}]=${GITHUB_SHA:0:7}
           fi
-          TOKENS_REPLACEMENTS[{% API_URL %}]="${ROOT_API_URL}"/${NAME}
+          TOKENS_REPLACEMENTS[{% API_URL %}]="${{ needs.deploy-handler.outputs.API_URL }}"
           shopt -s globstar
           for view in **/*.html; do
               for token in "${!TOKENS_REPLACEMENTS[@]}"; do
@@ -306,15 +339,13 @@ jobs:
     needs:
       - get-name
       - build-content
-    env:
-      NAME: ${{ needs.get-name.outputs.NAME }}
 
     steps:
 
       - name: Download content as artifact
         uses: actions/download-artifact@v3
         with:
-          name: frontend_${{ env.NAME }}
+          name: frontend_${{ needs.get-name.outputs.NAME }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -324,4 +355,4 @@ jobs:
 
       - name: Sync content with S3
         run: |
-          aws s3 sync --delete . s3://${{ vars.HOSTING_BUCKET }}/${NAME}/
+          aws s3 sync --delete . s3://${{ vars.HOSTING_BUCKET }}/${{ needs.get-name.outputs.NAME }}/
