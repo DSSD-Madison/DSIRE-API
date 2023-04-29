@@ -13,16 +13,14 @@ permissions:
 
 jobs:
 
-  get-name:
+  get-names:
       name: Get deployment names
       runs-on: ubuntu-latest
       environment: AWS_Development
       outputs:
         NAME: ${{ steps.get-name.outputs.NAME }}
-        PACKAGE_NAME: api_${{ steps.get-name.outputs.NAME }}
-        EXT_DEPS_PACKAGE_NAME: api-ext-deps_${{ steps.get-name.outputs.NAME }}
-        HANDLER_NAME: DsireApi_${{ steps.get-name.outputs.NAME }}
-        HANDLER_STACK_NAME: DsireApi-${{ steps.get-name.outputs.NAME }}
+        HANDLER: DsireApi_${{ steps.get-name.outputs.NAME }}
+        HANDLER_STACK: DsireApi-${{ steps.get-name.outputs.NAME }}
 
       steps:
 
@@ -36,38 +34,17 @@ jobs:
           if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
 
 
-  unsync-package:
-    name: Delete S3 packages
-    runs-on: ubuntu-latest
-    environment: AWS_Development
-    needs: get-name
-
-    steps:
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-
-      - name: Remove packages from S3
-        if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
-        run: |
-          aws s3 rm s3://${{ vars.PACKAGE_BUCKET }}/${{ needs.get-name.outputs.PACKAGE_NAME }}.zip
-          aws s3 rm s3://${{ vars.PACKAGE_BUCKET }}/${{ needs.get-name.outputs.EXT_DEPS_PACKAGE_NAME }}.zip
-
   undeploy-handler:
     name: Remove Lambda handler
     runs-on: ubuntu-latest
     environment: AWS_Development
     needs:
-      - get-name
+      - get-names
 
     steps:
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
         with:
           aws-region: ${{ vars.AWS_REGION }}
@@ -75,18 +52,18 @@ jobs:
 
       - name: Remove handler stack
         if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
-        run: aws cloudformation delete-stack --stack-name ${{ needs.get-name.outputs.HANDLER_STACK_NAME }}
+        run: aws cloudformation delete-stack --stack-name ${{ needs.get-names.outputs.HANDLER_STACK }}
 
   delete-content:
     name: Delete S3 content
     runs-on: ubuntu-latest
     environment: AWS_Development
-    needs: get-name
+    needs: get-names
 
     steps:
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
         with:
           aws-region: ${{ vars.AWS_REGION }}
@@ -94,4 +71,4 @@ jobs:
 
       - name: Remove hosted content from S3
         if: github.event.ref_type == 'branch' || github.event_name == 'workflow_dispatch'
-        run: aws s3 rm --recursive s3://${{ vars.HOSTING_BUCKET }}/${{ needs.get-name.outputs.NAME }}
+        run: aws s3 rm --recursive s3://${{ vars.HOSTING_BUCKET }}/${{ needs.get-names.outputs.NAME }}

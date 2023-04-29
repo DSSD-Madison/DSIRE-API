@@ -1,5 +1,4 @@
-document.getElementById("submit").addEventListener("click", async e => {
-    e.preventDefault();
+window.submit = async function submit(v3Token) {
 
     const formData = {};
     ["name", "email", "org"].forEach(field => {
@@ -54,4 +53,4 @@ document.getElementById("submit").addEventListener("click", async e => {
             loader.style.display = "none";
             break;
     }
-});
+}
