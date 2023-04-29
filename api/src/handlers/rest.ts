@@ -9,7 +9,7 @@ import schema from "./graphql/schema"
 export default async function rest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
     const param_str = JSON.stringify(event.queryStringParameters);
-    const params: Map<string, number> = new Map();
+    const params: Map<string, string> = new Map();
     JSON.parse(param_str, (key, value) => {
         params.set(key,value);
     });
