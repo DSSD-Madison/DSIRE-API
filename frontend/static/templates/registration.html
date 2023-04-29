@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=PT+Sans:wght@700&display=swap">
 
+    <script src="https://www.google.com/recaptcha/api.js"></script>
     <script type="module" src="scripts/registration.mjs" defer></script>
 
     <title>API Registration—DSIRE</title>
@@ -31,7 +32,15 @@
         <input id="form-name" type="text" placeholder="*Contact name">
         <input id="form-email" type="email" placeholder="*Contact email">
         <input id="form-org" type="text" placeholder="*Contact's organization">
-        <button id="submit">Submit</button>
+        <button
+            id="submit"
+            class="g-recaptcha"
+            data-sitekey="6LekdMglAAAAANHq13AhAa5J87UoUte18y5If8P-"
+            data-action="submit"
+            data-callback="submit"
+        >
+            Submit
+        </button>
     </div>
 
     <div id="status">
@@ -40,7 +49,7 @@
         <div id="loader" class="loader"></div>
     </div>
 
-    <span id="ref-hash">{% STAGE %} {% COMMIT_HASH_SHORT %}</span>
+    <span id="ref-hash">{% REF_NAME %} {% COMMIT_HASH_SHORT %}</span>
 
     <div id="API_URL" style="display: none">{% API_URL %}</div>
 
