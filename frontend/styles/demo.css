@@ -109,7 +109,7 @@ body {
     border-radius: 10px;
   }
 
-  a:link {
+  /*a:link {
     text-decoration: none;
     color: lightgray;
   }
@@ -125,6 +125,5 @@ body {
 
   a:active {
     text-decoration: none;
-  
-}
+  }*/
 h2 {display: inline;}
