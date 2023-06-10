@@ -1,7 +1,8 @@
 import {
   GraphQLEnumType as QlEnum,
   GraphQLObjectType as QlObject,
-  GraphQLString as QlString
+  GraphQLString as QlString,
+  GraphQLNonNull as QLNonNull
 } from "graphql"
 
 
@@ -85,7 +86,7 @@ export const StateId = new QlEnum({
     },
     AS: {
       value: 4,
-      description: "?"
+      description: "American Samoa"
     },
     AR: {
       value: 5,
@@ -113,7 +114,7 @@ export const StateId = new QlEnum({
     },
     US: {
       value: 11,
-      description: "?"
+      description: "Federal"
     },
     FL: {
       value: 12,
@@ -125,7 +126,7 @@ export const StateId = new QlEnum({
     },
     GU: {
       value: 14,
-      description: "?"
+      description: "Guam"
     },
     HI: {
       value: 15,
@@ -193,7 +194,7 @@ export const StateId = new QlEnum({
     },
     MP: {
       value: 31,
-      description: "?"
+      description: "N. Mariana Islands"
     },
     NE: {
       value: 32,
@@ -241,7 +242,7 @@ export const StateId = new QlEnum({
     },
     PW: {
       value: 43,
-      description: "?"
+      description: "Palau"
     },
     PA: {
       value: 44,
@@ -305,11 +306,11 @@ export const StateId = new QlEnum({
     },
     MH: {
       value: 59,
-      description: "?"
+      description: "Marshall Islands"
     },
     FM: {
       value: 60,
-      description: "?"
+      description: "Federated States of Micronesia"
     }
   }
 });
@@ -324,13 +325,13 @@ export const State = new QlObject({
   fields: {
 
     id: {
-      type: StateId,
-      description: "hi"
+      type: new QLNonNull(StateId),
+      description: "State abbreviation"
     },
 
     name: {
-      type: QlString,
-      description: "hi"
+      type: new QLNonNull(QlString),
+      description: "State name"
     }
   }
 });

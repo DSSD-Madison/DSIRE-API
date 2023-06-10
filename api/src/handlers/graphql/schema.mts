@@ -56,13 +56,13 @@ const Sortable = new InputObjectType({
   fields: {
 
     field: {
-      type: NonNull(String),
-      description: "hi"
+      type: new NonNull(String),
+      description: "Field to be sorted"
     },
 
     direction: {
       type: String,
-      description: "hi",
+      description: "Direction of sort: asc or desc",
       defaultValue: "asc"
     }
   }
@@ -74,33 +74,33 @@ const Filterable = new InputObjectType({
   fields: {
 
     field: {
-      type: NonNull(String),
-      description: "hi"
+      type: new NonNull(String),
+      description: "Field to be filtered"
     },
 
     contains: {
       type: String,
-      description: "hi"
+      description: "Field contains some input string"
     },
 
     inInts: {
-      type: List(Int),
-      description: "hi"
+      type: new List(Int),
+      description: "Field is in list of numbers"
     },
 
     inStrs: {
-      type: List(String),
-      description: "hi"
+      type:new List(String),
+      description: "Field is in list of words"
     },
 
     lt: {
       type: Int,
-      description: "hi"
+      description: "Field is less than number"
     },
 
     gt: {
       type: Int,
-      description: "hi"
+      description: "Field is greater than number"
     }
   }
 });
@@ -112,28 +112,28 @@ const PageInfo = new ObjectType({
   fields: {
 
     hasPreviousPage: {
-      type: NonNull(Boolean),
-      description: "hi"
+      type: new NonNull(Boolean),
+      description: "Current page has a previous page"
     },
 
     hasNextPage: {
-      type: NonNull(Boolean),
-      description: "hi"
+      type: new NonNull(Boolean),
+      description: "Current page has a nect page"
     },
 
     page: {
-      type: NonNull(Int),
-      description: "hi"
+      type: new NonNull(Int),
+      description: "Page number"
     },
 
     previousPage: {
       type: Int,
-      description: "hi"
+      description: "Previous page number"
     },
 
     nextPage: {
       type: Int,
-      description: "hi"
+      description: "Next page number"
     }
   }
 });
@@ -163,12 +163,12 @@ const ProgramCategory = new ObjectType({
 
     id: {
       type: ProgramCategoryId,
-      description: "hi"
+      description: "Program category id: FINANCIAL_INCENTIVE or REGULATORY_POLICY"
     },
 
     name: {
       type: String,
-      description: "hi"
+      description: "Program category name: Financial incentive or Regulatory Policy"
     }
   }
 });
@@ -192,7 +192,7 @@ const StateId = new Enum({
     },
     AS: {
       value: 4,
-      description: "?"
+      description: "American Samoa"
     },
     AR: {
       value: 5,
@@ -220,7 +220,7 @@ const StateId = new Enum({
     },
     US: {
       value: 11,
-      description: "?"
+      description: "Federal"
     },
     FL: {
       value: 12,
@@ -232,7 +232,7 @@ const StateId = new Enum({
     },
     GU: {
       value: 14,
-      description: "?"
+      description: "Guam"
     },
     HI: {
       value: 15,
@@ -300,7 +300,7 @@ const StateId = new Enum({
     },
     MP: {
       value: 31,
-      description: "?"
+      description: "N. Mariana Islands"
     },
     NE: {
       value: 32,
@@ -348,7 +348,7 @@ const StateId = new Enum({
     },
     PW: {
       value: 43,
-      description: "?"
+      description: "Palau"
     },
     PA: {
       value: 44,
@@ -412,11 +412,11 @@ const StateId = new Enum({
     },
     MH: {
       value: 59,
-      description: "?"
+      description: "Marshall Islands"
     },
     FM: {
       value: 60,
-      description: "?"
+      description: "Federated States of Micronesia"
     }
   }
 });
@@ -428,12 +428,12 @@ const State = new ObjectType({
 
     id: {
       type: StateId,
-      description: "hi"
+      description: "State abbreviation"
     },
 
     name: {
       type: String,
-      description: "hi"
+      description: "State name"
     }
   }
 });
@@ -451,33 +451,33 @@ const Program = new ObjectType({
 
     url: {
       type: String,
-      description: "hi"
+      description: "The program website"
     },
 
     startDate: {
       type: String,
-      description: "hi",
+      description: "The program start date",
       resolve: (obj: Program) => obj.startDate ? new Date(obj.startDate).toDateString() : null
     },
 
     endDate: {
       type: String,
-      description: "hi"
+      description: "The program end date"
     },
 
     summary: {
       type: String,
-      description: "hi"
+      description: "The program summary"
     },
 
     programCategory: {
       type: ProgramCategory,
-      description: "hi"
+      description: "The program category: Financial Incentive or  Regulatory Policy"
     },
 
     programType: {
       type: String,
-      description: "hi",
+      description: "The program type i.e. Personal Tax Deduction",
       resolve: (obj: Program) => obj.programType.name
     },
 
@@ -487,8 +487,8 @@ const Program = new ObjectType({
     },
 
     zips: {
-      type: List(String),
-      description: "hi",
+      type: new List(String),
+      description: "Program's applicable zipcods",
       resolve: (obj: Program) => obj.zips.map(programZip => programZip.zip.code)
     }
   }
@@ -505,17 +505,17 @@ export default new Schema({
       programs: {
         type: new ObjectType({
           name: "QueryResults",
-          description: "hi",
+          description: "JSON formatted query results",
           fields: {
 
             results: {
-              type: List(Program),
-              description: "hi"
+              type: new List(Program),
+              description: "List of programs resulting from query"
             },
 
             pageInfo: {
               type: PageInfo,
-              description: "hi"
+              description: "Page information for current query"
             }
           },
         }),
@@ -524,7 +524,7 @@ export default new Schema({
 
           page: {
             type: Int,
-            description: "hi",
+            description: "Query a specific page",
             defaultValue: 0
           },
 
@@ -535,13 +535,13 @@ export default new Schema({
           },
 
           filter: {
-            type: List(Filterable),
-            description: "hi"
+            type: new List(Filterable),
+            description: "List of query filters"
           },
 
           sort: {
-            type: List(Sortable),
-            description: "hi"
+            type: new List(Sortable),
+            description: "List of query result orderings"
           }
         },
         resolve: async (obj, args, ctx: Context, info) => {
