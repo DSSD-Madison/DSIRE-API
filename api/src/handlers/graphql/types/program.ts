@@ -46,12 +46,12 @@ export const ProgramCategory = new QLObject({
 
     id: {
       type: new QLNonNull(ProgramCategoryId),
-      description: "hi"
+      description: "Program category id"
     },
 
     name: {
       type: new QLNonNull(QLString),
-      description: "hi"
+      description: "Program category name"
     }
   }
 });
@@ -79,33 +79,33 @@ export const Program = new QLObject({
 
     url: {
       type: QLString,
-      description: "hi"
+      description: "The programs website url"
     },
 
     startDate: {
       type: QLString,
-      description: "hi",
+      description: "Program start date",
       resolve: (obj: Program_t) => obj.startDate ? new Date(obj.startDate).toDateString() : null
     },
 
     endDate: {
       type: QLString,
-      description: "hi"
+      description: "Program end date"
     },
 
     summary: {
       type: QLString,
-      description: "hi"
+      description: "Summary of the program"
     },
 
     programCategory: {
       type: ProgramCategory,
-      description: "hi"
+      description: "Program category: Financial Incentive or Regulatory Policy"
     },
 
     programType: {
       type: QLString,
-      description: "hi",
+      description: "The program incentive i.e. Personal Tax Deduction",
       resolve: (obj: Program_t) => obj.programType.name
     },
 
@@ -116,7 +116,7 @@ export const Program = new QLObject({
 
     zips: {
       type: new QLList(QLString),
-      description: "hi",
+      description: "Program's applicable zipcodes",
       resolve: (obj: Program_t) => obj.zips.map(programZip => programZip.zip.code)
     }
   }
