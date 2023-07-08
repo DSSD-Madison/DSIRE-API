@@ -1,11 +1,10 @@
 @import "root.css";
 @import "sash.css";
 @import "loader.css";
-@import "ref-hash.css";
 
 
 #content input {
-    width: 60%;
+    width: 80%;
     max-width: 400px;
     box-sizing: border-box;
 
@@ -29,4 +28,8 @@
     min-width: 96px;
     min-height: 32px;
     margin-top: 16px;
+}
+
+#content .content-spacer {
+    height: 24px;
 }

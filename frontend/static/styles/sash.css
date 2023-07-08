@@ -1,7 +1,7 @@
 body {
     display: grid;
-    grid-template-columns: 15% auto 15%;
-    grid-template-rows: 10% 20% 40% 20% 10%;
+    grid-template-columns: 5% auto 5%;
+    grid-template-rows: 10% 20% auto 20% 10%;
     grid-template-areas: ". .       ."
                          ". meta    ."
                          ". content ."
