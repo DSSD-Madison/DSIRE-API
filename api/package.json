@@ -12,6 +12,7 @@
     "build": "esbuild src/index.ts --bundle --external:@prisma/client --platform=node --target=node18 --sourcemap=inline --outfile=../dist/api/index.cjs --metafile=meta.json",
     "build-main": "esbuild src/index.ts --bundle --external:@prisma/client --platform=node --target=node18 --minify --outfile=../dist/api/index.cjs",
     "graphql": "ts-node src/handlers/graphql/devServer.ts",
+    "deploy": "zip -9 ../dist/api.zip ../dist/api/index.cjs && aws lambda update-function-code --function-name ${HANDLER_NAME} --zip-file fileb://../dist/api.zip",
     "clean": "rm -rf ../dist"
   },
   "dependencies": {

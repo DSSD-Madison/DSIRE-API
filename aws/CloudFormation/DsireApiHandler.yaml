@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Associates a lambda handler with an API stage and deploys it on the gateway for the DSIRE API"
+Description: "Associates a Lambda handler with an API stage and deploys it on the gateway for the DSIRE API"
 
 
 
@@ -13,6 +13,7 @@ Description: "Associates a lambda handler with an API stage and deploys it on th
     # SubnetIds
     # ApiId
     # HandlerRoleArn
+    # HostingBucket
 
 
 
@@ -22,27 +23,42 @@ Parameters:
     Type: String
     Description: >
       The name of the handler is used to associate it with a corresponding
-      stage on the API Gateway.
+      stage on the API Gateway and to fill some friendly naming.
 
 
 
 Resources:
 
+  Layer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleArchitectures: ["x86_64"]
+      CompatibleRuntimes: ["nodejs18.x"]
+      LayerName: !Join ['_', ["DsireApi", !Ref Name]]
+      Description: !Sub
+                     - "External dependencies for the ${NAME} handler."
+                     - NAME: !Ref Name
+      Content:
+        S3Bucket: !ImportValue HostingBucket
+        S3Key: "default-layer.zip"
+
   Handler:
     Type: AWS::Lambda::Function
+    DependsOn: Layer
     Properties:
       FunctionName: !Join ['_', ["DsireApi", !Ref Name]]
       Description: !Sub
-                     - "Handler for API stage ${NAME}"
+                     - "The handler for API stage ${NAME}."
                      - NAME: !Ref Name
       Code:
-        S3Bucket: !ImportValue PackageBucketName
-        S3Key: "default-code.zip"
+        # The default Lambda code, inlined
+        ZipFile: "export const handler = async(event) => ({statusCode: 200, body: JSON.stringify(\"Hello from Lambda!\")})"
       PackageType: Zip
       Runtime: nodejs18.x
       Handler: index.handler
-      Timeout: 10
+      Timeout: 7
       Role: !ImportValue HandlerRoleArn
+      Layers: [!Ref Layer]
       VpcConfig:
         SecurityGroupIds:
           - !ImportValue SecurityGroupId
@@ -55,8 +71,7 @@ Resources:
     # see "You defined your Lambda function as a stage variable; you must manually give permissions to all
     # the functions you will use..."
     Type: AWS::Lambda::Permission
-    DependsOn:
-      - Stage
+    DependsOn: Stage
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref Handler

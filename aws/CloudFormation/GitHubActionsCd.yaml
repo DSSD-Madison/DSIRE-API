@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Use GitHub & S3 for package and hosting CD via OIDC"
+Description: "Use GitHub for package and hosting CD via OIDC"
 
 
 
@@ -83,45 +83,3 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
         - arn:aws:iam::aws:policy/AWSLambda_FullAccess
         - arn:aws:iam::aws:policy/IAMFullAccess
-
-
-  PackageBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: dsire-api-packages
-
-  HostingBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-      BucketName: dsire-api-hosting
-      WebsiteConfiguration:
-        IndexDocument: "index.html"
-        ErrorDocument: "error.html"
-
-  HostingBucketPRGO:
-    Type: AWS::S3::BucketPolicy
-    DependsOn: HostingBucket
-    Properties:
-      Bucket: !Ref HostingBucket
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-           Effect: Allow
-           Action: s3:GetObject
-           Principal: "*"
-           Resource: !Join ["/", [!GetAtt HostingBucket.Arn, "*"]]
-
-
-
-Outputs:
-
-  PackageBucketName:
-    Value: !Ref PackageBucket
-    Export:
-      Name: PackageBucketName
-    Description: Name of the S3 bucket created for CD packages
-
-  HostingUrl:
-    Description: Root URL for accessing hosted content
-    Value: !GetAtt HostingBucket.WebsiteURL

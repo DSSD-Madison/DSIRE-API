@@ -12,6 +12,7 @@ import {Prisma} from "@prisma/client"
 import {z} from "zod"
 
 import {ProgramCategoryId, ProgramCategoryId_t} from "./program"
+import { StateId } from "./state";
 
 
 export const IntFilter_t = z.object({
@@ -247,12 +248,12 @@ export const ProgramCategoryFilter = new QLInputObject({
 
     id: {
       type: ProgramCategoryIdFilter,
-      description: "hi"
+      description: "Program category id: REGULATORY_POLICY or FINANCIAL_INCENTIVE"
     },
 
     name: {
       type: StringFilter,
-      description: "hi"
+      description: "Program category name: Regulatory Policy or Financial Incentive"
     }
   }
 });
@@ -262,12 +263,33 @@ export const ProgramTypeFilter_t = z.object({
 }).partial();
 export const ProgramTypeFilter = new QLInputObject({
   name: "ProgramTypeFilter",
-  description: "hi",
+  description: "Filter program type by name",
   fields: {
 
     name: {
       type: StringFilter,
-      description: "hi"
+      description: "Name of program type i.e Personal Tax Deduction"
+    }
+  }
+});
+
+export const StateFilter_t = z.object({
+  id: z.number(),
+  name: StringFilter_t
+}).partial();
+export const StateFilter = new QLInputObject({
+  name: "StateFilter",
+  description: "Restricts a program state field to a series of constraints.",
+  fields: {
+
+    id: {
+      type: StateId,
+      description: "State abbreviation"
+    },
+
+    name: {
+      type: StringFilter,
+      description: "State name"
     }
   }
 });
@@ -279,7 +301,8 @@ export const ProgramFilter_t = z.object({
   endDate: DateFilter_t,
   summary: StringFilter_t,
   programCategory: ProgramCategoryFilter_t,
-  programType: ProgramTypeFilter_t
+  programType: ProgramTypeFilter_t,
+  state: StateFilter_t
 }).partial().optional();
 export const ProgramFilter = new QLInputObject({
   name: "ProgramFilter",
@@ -319,6 +342,11 @@ export const ProgramFilter = new QLInputObject({
     programType: {
       type: StringFilter,
       description: "Restricts programs based on their program type."
+    },
+    
+    state: {
+      type: StateFilter,
+      description: "Restricts programs based on the states that implement them."
     }
   }
 });

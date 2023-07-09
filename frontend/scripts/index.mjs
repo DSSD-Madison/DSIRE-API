@@ -1,4 +1,5 @@
-window.submit = async function submit(v3Token) {
+document.getElementById("submit").addEventListener("click", async e => {
+    e.preventDefault();
 
     const formData = {};
     ["name", "email", "org"].forEach(field => {
@@ -18,7 +19,7 @@ window.submit = async function submit(v3Token) {
 
     document.getElementById("sash").classList.add("reveal-status");
 
-    const response = await fetch(`${document.getElementById("API_URL").innerText}/register`, {
+    const response = await fetch(`${document.getElementById("API_URL").innerHTML}/register`, {
         method: "POST",
         headers: {
             "content-type": "application/json"
@@ -53,4 +54,4 @@ window.submit = async function submit(v3Token) {
             loader.style.display = "none";
             break;
     }
-}
+});

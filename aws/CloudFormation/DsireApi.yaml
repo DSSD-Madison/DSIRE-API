@@ -25,6 +25,10 @@ Parameters:
       # - subnet-03903f9e5abb3a1f3
       # - subnet-0962f733fc73508f8
 
+  HostingBucketName:
+    Type: String
+    Default: dsire-api-hosting
+
 
 
 Resources:
@@ -113,6 +117,40 @@ Resources:
       ToPort: 587
 
 
+  HostingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref HostingBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: "index.html"
+        ErrorDocument: "error.html"
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
+  # see "Granting public access to S3 buckets (2023-04-25 default change)"
+  PublicHosting:
+    Type: AWS::S3::BucketPolicy
+    DependsOn: HostingBucket
+    Properties:
+      Bucket: !Ref HostingBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+           Effect: Allow
+           Action: s3:GetObject
+           Principal: "*"
+           Resource:
+            Fn::Join:
+              - ""
+              - - "arn:aws:s3:::"
+                - Ref: "HostingBucket"
+                - "/*"
+
+
 
 Outputs:
 
@@ -141,9 +179,21 @@ Outputs:
     Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com"
     Export:
       Name: ApiUrl
-    Description: Root URL for querying the DSIRE API
+    Description: The root URL for querying the DSIRE API.
 
   HandlerRoleArn:
     Value: !GetAtt HandlerRole.Arn
     Export:
       Name: HandlerRoleArn
+
+  HostingBucket:
+    Value: !Ref HostingBucket
+    Export:
+      Name: HostingBucket
+    Description: The name of the S3 bucket configured for static hosting.
+
+  HostingUrl:
+    Value: !Join ["", ["https://", !Ref HostingBucket, ".s3.amazonaws.com"]]
+    Export:
+      Name: HostingUrl
+    Description: The root URL for accessing content hosted on S3.

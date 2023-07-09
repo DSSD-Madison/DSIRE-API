@@ -22,3 +22,14 @@ p, h1, h2, h3, h4, h5, h6 {
     border: 0;
     padding: 0;
 }
+
+#ref-hash {
+    position: absolute;
+    bottom: 128px;
+    right: 0;
+    margin: 16px;
+
+    font-family: monospace;
+    font-size: 10px;
+    color: grey;
+}
