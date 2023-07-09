@@ -12,6 +12,7 @@ import {z} from "zod"
 
 import {PageInfo, PageInfo_t} from "./pagination"
 import {State, State_t} from "./state"
+import { Technology } from "./technology"
 
 
 export enum ProgramCategoryId_t {
@@ -64,6 +65,11 @@ export const programRelations = {
     include: {
       zip: true
     }
+  },
+  program_technology: {
+    include: {
+      technology: true
+    }
   }
 }
 export type Program_t = Prisma.ProgramGetPayload<{include: typeof programRelations}>
@@ -107,6 +113,12 @@ export const Program = new QLObject({
       type: QLString,
       description: "The program incentive i.e. Personal Tax Deduction",
       resolve: (obj: Program_t) => obj.programType.name
+    },
+
+    programTechnologies: {
+      type: new QLList(QLString),
+      description: "Program's eligible technologies",
+      resolve: (obj: Program_t) => obj.program_technology.map(programTech => programTech.technology.name)
     },
 
     state: {

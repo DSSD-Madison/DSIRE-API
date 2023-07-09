@@ -6,13 +6,15 @@ import {
   GraphQLList as QLList,
   GraphQLNonNull as QLNonNull,
   GraphQLObjectType as QLObject,
-  GraphQLString as QLString
+  GraphQLString as QLString,
+  GraphQLBoolean as QLBoolean
 } from "graphql"
 import {Prisma} from "@prisma/client"
 import {z} from "zod"
 
 import {ProgramCategoryId, ProgramCategoryId_t} from "./program"
 import { StateId } from "./state";
+import { TechnologyId } from "./technology";
 
 
 export const IntFilter_t = z.object({
@@ -146,6 +148,46 @@ export const StringFilter = new QLInputObject({
     }
   }
 });
+
+export const StringListFilter_t = z.object({
+  equals: z.string().array(),
+  has: z.string(),
+  hasEvery: z.string().array(),
+  hasSome: z.string().array(),
+  isEmpty: z.boolean(),
+}).partial();
+export const StringListFilter = new QLInputObject({
+  name: "StringListFilter",
+  description: "Restricts a list of strings field to a series of conditions.",
+  fields: {
+
+    equals: {
+      type: new QLList(QLString),
+      description: "The field equals only this list."
+    },
+
+    has: {
+      type: QLString,
+      description: "The field contains this string."
+    },
+
+    hasEvery: {
+      type: new QLList(QLString),
+      description: "The field has each value."
+    },
+
+    hasSome: {
+      type: new QLList(QLString),
+      description: "The field has some of these values."
+    },
+
+    isEmpty: {
+      type: QLBoolean,
+      description: "The field is an empty list."
+    }
+  }
+});
+
 
 export const DateFilter_t = z.object({
   equals: z.date(),
@@ -302,7 +344,8 @@ export const ProgramFilter_t = z.object({
   summary: StringFilter_t,
   programCategory: ProgramCategoryFilter_t,
   programType: ProgramTypeFilter_t,
-  state: StateFilter_t
+  program_technologies: StringFilter_t,
+  state: StateFilter_t,
 }).partial().optional();
 export const ProgramFilter = new QLInputObject({
   name: "ProgramFilter",
@@ -342,6 +385,11 @@ export const ProgramFilter = new QLInputObject({
     programType: {
       type: StringFilter,
       description: "Restricts programs based on their program type."
+    },
+
+    programTechnologies: {
+      type: StringFilter,
+      description: "Restricts programs based on their eligible technologies."
     },
     
     state: {
