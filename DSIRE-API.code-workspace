@@ -22,6 +22,9 @@
         "editor.indentSize": "tabSize",
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
-        "files.trimTrailingWhitespace": true
+        "files.trimTrailingWhitespace": true,
+        "[yaml]": {
+            "editor.tabSize": 2
+        }
     }
 }

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Infrastructure for the DSIRE API ecosystem"
+Description: Infrastructure for the DSIRE API ecosystem
 
 
 
@@ -8,26 +8,35 @@ Parameters:
   VpcId:
     Type: String
     Default: vpc-02aebef18a7738b6a
-    Description: "The ID of the VPC holding the programs database"
+    Description: The ID of the VPC holding the programs database
 
   SecurityGroupId:
     Type: String
     Default: sg-034ea701a79012c14
-    Description: "The ID of the security group in the VPC managing the programs database"
+    Description: The ID of the security group managing the programs database
 
   SubnetIds:
     Type: CommaDelimitedList
     Default: "subnet-0e968dd68b1557a24"
-      # TODO: we want to run in all AZs?
+      # TODO We want to run in all AZs?
       # - subnet-00ff385195c1dbdb5
       # - subnet-02563ccf50bd2aba3
       # - subnet-0b828c335bdc547f1
       # - subnet-03903f9e5abb3a1f3
       # - subnet-0962f733fc73508f8
+    Description: The VPC subnets to replicate entities across
 
-  HostingBucketName:
+  GraphQLPathPart:
     Type: String
-    Default: dsire-api-hosting
+    Default: graphql
+    Description: The path component for the GraphQL API (https://root-url.com/${Name}/api/${GraphQLPathPart}/...)
+    AllowedPattern: "[a-zA-Z0-9-]+"
+
+  VerificationPathPart:
+    Type: String
+    Default: verification
+    Description: The path component for the verification API (https://root-url.com/${Name}/api/${VerificationPathPart}/...)
+    AllowedPattern: "[a-zA-Z0-9-]+"
 
 
 
@@ -42,34 +51,81 @@ Resources:
         Types:
           - EDGE
 
-  ProxyResource:
+  ApiResource:
     Type: AWS::ApiGateway::Resource
     DependsOn: Api
     Properties:
       RestApiId: !Ref Api
       ParentId: !GetAtt Api.RootResourceId
-      PathPart: "{proxy+}"
+      PathPart: "api"
 
-  ProxyMethod:
-    Type: AWS::ApiGateway::Method
-    DependsOn: ProxyResource
+  GraphQLResource:
+    Type: AWS::ApiGateway::Resource
+    DependsOn: Api
     Properties:
       RestApiId: !Ref Api
-      ResourceId: !Ref ProxyResource
+      ParentId: !GetAtt ApiResource.ResourceId
+      PathPart: !Ref GraphQLPathPart
+
+  VerificationResource:
+    Type: AWS::ApiGateway::Resource
+    DependsOn: Api
+    Properties:
+      RestApiId: !Ref Api
+      ParentId: !GetAtt ApiResource.ResourceId
+      PathPart: !Ref VerificationPathPart
+
+  AgnesProxyResource:
+    Type: AWS::ApiGateway::Resource
+    DependsOn: Api
+    Properties:
+      RestApiId: !Ref Api
+      ParentId: !GetAtt GraphQLResource.ResourceId
+      PathPart: "{proxy+}"
+
+  BettyProxyResource:
+    Type: AWS::ApiGateway::Resource
+    DependsOn: Api
+    Properties:
+      RestApiId: !Ref Api
+      ParentId: !GetAtt VerificationResource.ResourceId
+      PathPart: "{proxy+}"
+
+  AgnesProxyMethod:
+    Type: AWS::ApiGateway::Method
+    DependsOn: AgnesProxyResource
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref AgnesProxyResource
       AuthorizationType: NONE
+      # TODO Lock this down?
       HttpMethod: ANY
       Integration:
         Type: AWS_PROXY
         # Mandatory for AWS_PROXY/lambda integration
         IntegrationHttpMethod: POST
-        # TODO is this the cleanest?
-        Uri: !Join ["", [!Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:", "${stageVariables.handler}", "/invocations"]]
+        Uri: !Join ["", [!Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:", "${stageVariables.agnes}", "/invocations"]]
+
+  BettyProxyMethod:
+    Type: AWS::ApiGateway::Method
+    DependsOn: BettyProxyResource
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref BettyProxyResource
+      AuthorizationType: NONE
+      # TODO Lock this down?
+      HttpMethod: ANY
+      Integration:
+        Type: AWS_PROXY
+        # Mandatory for AWS_PROXY/lambda integration
+        IntegrationHttpMethod: POST
+        Uri: !Join ["", [!Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:", "${stageVariables.betty}", "/invocations"]]
 
 
   HandlerRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: DsireApiHandlers
+      RoleName: DsireApiHandler
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -79,7 +135,7 @@ Resources:
             Service: lambda.amazonaws.com
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        # TODO wildcard
+        # TODO Wildcard
         - arn:aws:iam::aws:policy/AmazonSESFullAccess
       Policies:
         - PolicyDocument:
@@ -91,109 +147,37 @@ Resources:
                   - ec2:CreateNetworkInterface
                   - ec2:DescribeNetworkInterfaces
                   - ec2:DeleteNetworkInterface
-                # TODO wildcard
+                # TODO Wildcard
                 Resource: "*"
           PolicyName: AllowVpcNetworking
-
-
-  SesEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      SecurityGroupIds:
-        - !Ref SecurityGroupId
-      SubnetIds: !Ref SubnetIds
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: True
-      ServiceName: !Sub "com.amazonaws.${AWS::Region}.email-smtp"
-
-  SesIngressTraffic:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref SecurityGroupId
-      SourceSecurityGroupId: !Ref SecurityGroupId
-      IpProtocol: tcp
-      FromPort: 587
-      ToPort: 587
-
-
-  HostingBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Ref HostingBucketName
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: false
-        BlockPublicPolicy: false
-        IgnorePublicAcls: false
-        RestrictPublicBuckets: false
-      WebsiteConfiguration:
-        IndexDocument: "index.html"
-        ErrorDocument: "error.html"
-
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
-  # see "Granting public access to S3 buckets (2023-04-25 default change)"
-  PublicHosting:
-    Type: AWS::S3::BucketPolicy
-    DependsOn: HostingBucket
-    Properties:
-      Bucket: !Ref HostingBucket
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-           Effect: Allow
-           Action: s3:GetObject
-           Principal: "*"
-           Resource:
-            Fn::Join:
-              - ""
-              - - "arn:aws:s3:::"
-                - Ref: "HostingBucket"
-                - "/*"
 
 
 
 Outputs:
 
-  VpcId:
-    Value: !Ref VpcId
-    Export:
-      Name: VpcId
-
   SecurityGroupId:
     Value: !Ref SecurityGroupId
     Export:
-      Name: SecurityGroupId
+      Name: DsireApi-SecurityGroupId
 
   SubnetIds:
     Value: !Join [",", !Ref SubnetIds]
     Export:
-      Name: SubnetIds
+      Name: DsireApi-SubnetIds
 
 
   ApiId:
     Value: !Ref Api
     Export:
-      Name: ApiId
+      Name: DsireApi-ApiId
 
   ApiUrl:
-    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com"
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/"
     Export:
-      Name: ApiUrl
-    Description: The root URL for querying the DSIRE API.
+      Name: DsireApi-ApiUrl
+    Description: The root (unstaged) URL for the DSIRE API
 
   HandlerRoleArn:
     Value: !GetAtt HandlerRole.Arn
     Export:
-      Name: HandlerRoleArn
-
-  HostingBucket:
-    Value: !Ref HostingBucket
-    Export:
-      Name: HostingBucket
-    Description: The name of the S3 bucket configured for static hosting.
-
-  HostingUrl:
-    Value: !Join ["", ["https://", !Ref HostingBucket, ".s3.amazonaws.com"]]
-    Export:
-      Name: HostingUrl
-    Description: The root URL for accessing content hosted on S3.
+      Name: DsireApi-HandlerRoleArn

@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Use GitHub for package CD via OIDC
+
+
+
+Parameters:
+
+  GitHubOIDCThumbprint:
+    Type: String
+    Default: 6938FD4D98BAB03FAADB97B34396831E3780AEA1
+
+  GitHubOrgName:
+    Type: String
+    Default: DSSD-Madison
+
+  GitHubRepoName:
+    Type: String
+    Default: DSIRE-API
+
+
+
+Resources:
+
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - !Ref GitHubOIDCThumbprint
+      Url: https://token.actions.githubusercontent.com
+
+  # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    DependsOn:
+      - GitHubOIDCProvider
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Action: sts:AssumeRoleWithWebIdentity
+          Principal:
+            Federated:
+              !GetAtt GitHubOIDCProvider.Arn
+          Condition:
+            StringEquals:
+              token.actions.githubusercontent.com:aud: sts.amazonaws.com
+            StringLike:
+              token.actions.githubusercontent.com:sub: !Sub
+                - repo:${ORG}/${REPO}:*
+                - ORG: !Ref GitHubOrgName
+                  REPO: !Ref GitHubRepoName
+      # TODO Wildcard
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - arn:aws:iam::aws:policy/IAMFullAccess

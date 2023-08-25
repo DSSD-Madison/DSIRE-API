@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Creates Lambda handlers for Agnes & Betty and deploys them on a
+  DSIRE API gateway stage
+
+
+
+# Imports:
+
+  # DsireApi
+    # DsireApi-SecurityGroupId
+    # DsireApi-SubnetIds
+    # DsireApi-ApiId
+    # DsireApi-HandlerRoleArn
+
+
+
+Parameters:
+
+  Name:
+    Type: String
+    Description: >-
+      The name of the handler is used to associate it with a corresponding
+      stage on the API Gateway (https://root-url.com/${Name}/...) and to fill
+      some friendly naming.
+    AllowedPattern: "[a-zA-Z0-9-]+"
+
+  Timeout:
+    Type: Number
+    # TODO Set Lambda execution timeout
+    Default: 7
+    Description: The Lambda execution-seconds timeout
+
+  Runtime:
+    Type: String
+    Default: nodejs18.x
+    Description: The Lambda runtime
+
+
+
+Resources:
+
+  Agnes:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "DsireApi-Agnes-${Name}"
+      Description: !Sub "The GraphQL API handler for stage ${Name}"
+      Runtime: !Ref Runtime
+      Handler: index.handler
+      Timeout: 7
+      PackageType: Zip
+      Code:
+        # The default Lambda code, inlined
+        ZipFile: "exports.handler = async (event) => ({statusCode: 200, body: JSON.stringify(\"Hello from Lambda!\")})"
+      Role: !ImportValue DsireApi-HandlerRoleArn
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue DsireApi-SecurityGroupId
+        SubnetIds: !Split [",", !ImportValue DsireApi-SubnetIds]
+
+  Betty:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "DsireApi-Betty-${Name}"
+      Description: !Sub "The verification API handler for stage ${Name}"
+      Runtime: !Ref Runtime
+      Handler: index.handler
+      Timeout: 7
+      PackageType: Zip
+      Code:
+        # The default Lambda code, inlined
+        ZipFile: "exports.handler = async (event) => ({statusCode: 200, body: JSON.stringify(\"Hello from Lambda!\")})"
+      Role: !ImportValue DsireApi-HandlerRoleArn
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-permission.html
+  # Allow the lambda to fire on its corresponding stage's API Gateway activity
+  # https://aws.amazon.com/blogs/compute/using-api-gateway-stage-variables-to-manage-lambda-functions/
+  # See "You defined your Lambda function as a stage variable; you must
+  # manually give permissions to all the functions you will use..."
+  # /*/*/* is wildcard for stage/request-type/endpoint
+
+  AgnesInvokePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn: Stage
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Agnes
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub
+                    - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API_ID}/${STAGE_NAME}/*/*
+                    - API_ID: !ImportValue DsireApi-ApiId
+                      STAGE_NAME: !Ref Name
+
+  BettyInvokePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn: Stage
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Betty
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub
+                    - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API_ID}/${STAGE_NAME}/*/*
+                    - API_ID: !ImportValue DsireApi-ApiId
+                      STAGE_NAME: !Ref Name
+
+
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !ImportValue DsireApi-ApiId
+    # Don't do this: it creates a default stage for the deployment, but we want a custom one (below)
+    #StageName: main
+
+  Stage:
+    Type: AWS::ApiGateway::Stage
+    DependsOn:
+      - Agnes
+      - Betty
+      - Deployment
+    Properties:
+      RestApiId: !ImportValue DsireApi-ApiId
+      DeploymentId: !Ref Deployment
+      StageName: !Ref Name
+      Variables:
+        agnes: !Ref Agnes
+        betty: !Ref Betty
