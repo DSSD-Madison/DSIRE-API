@@ -1,0 +1,27 @@
+{
+    "folders": [
+        {
+            "name": "repository",
+            "path": "."
+        },
+        {
+            "name": "agnes",
+            "path": "agnes/"
+        },
+        {
+            "name": "betty",
+            "path": "betty/"
+        },
+        {
+            "name": "clara",
+            "path": "clara/"
+        },
+    ],
+    "settings": {
+        "editor.tabSize": 4,
+        "editor.indentSize": "tabSize",
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true
+    }
+}
