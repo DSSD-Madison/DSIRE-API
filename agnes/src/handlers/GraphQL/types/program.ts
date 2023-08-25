@@ -1,4 +1,3 @@
-import {Prisma, PrismaClient} from "@prisma/client"
 import {
     GraphQLEnumType as QLEnum,
     GraphQLInputObjectType as QLInputObject,

@@ -1,31 +1,24 @@
 import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda"
-import {graphql as GraphQL} from "graphql"
-import {PrismaClient} from "@prisma/client"
+import {graphql} from "graphql"
 
-import {CORS_HEADERS} from "../headers"
-import schema from "./schema"
+import schema from "./GraphQL/schema"
 
 
-export type GraphQLContext = {
-    prisma: PrismaClient
-}
+export interface GraphQLContext {}
 
-export default async function graphql(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+export default async function GraphQL(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
 
     // TODO check bad body
     const {query, operationName, variableValues} = JSON.parse(event.body as any)
 
     return {
         headers: {
-            ...CORS_HEADERS,
             "content-type": "application/json"
         },
         statusCode: 200,
-        body: JSON.stringify(await GraphQL({
+        body: JSON.stringify(await graphql({
             schema: schema,
-            contextValue: {
-                prisma: new PrismaClient()
-            },
+            contextValue: {},
             source: query,
             operationName,
             variableValues

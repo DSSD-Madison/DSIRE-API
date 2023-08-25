@@ -4,9 +4,8 @@ import {
   GraphQLObjectType as QLObject,
   GraphQLSchema as QLSchema
 } from "graphql"
-import {Prisma} from "@prisma/client"
 
-import {GraphQLContext as QLContext} from "./graphql"
+import {GraphQLContext as QLContext} from "../GraphQL"
 import {
   Page, Page_t,
   PageInfo, PageInfo_t
@@ -77,13 +76,14 @@ export default new QLSchema({
 
 
 
-          const programs = await ctx.prisma.program.findMany({
-            where: tryd,
-            include: programRelations,
-
-            skip: (args.page as Page_t).skip,
-            take: (args.page as Page_t).take
-          });
+//           const programs = await ctx.prisma.program.findMany({
+//             where: tryd,
+//             include: programRelations,
+//
+//             skip: (args.page as Page_t).skip,
+//             take: (args.page as Page_t).take
+//           });
+            const programs: any = undefined;
 
           return {
             data: programs,

@@ -1,36 +1,34 @@
 {
-  "name": "dsire-api",
-  "version": "0.0.0",
+  "name": "dsire-api-agnes",
+  "description": "GraphQL API Lambda handler for the DSIRE API",
+  "version": "0.0.0-rc0",
   "repository": {
     "type": "git",
     "url": "https://github.com/DSSD-Madison/DSIRE-API.git",
-    "directory": "api/"
+    "directory": "agnes/"
   },
+  "private": "true",
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
     "really-check": "tsc -p tsconfig.json --noEmit --noErrorTruncation",
-    "build": "esbuild src/index.ts --bundle --external:@prisma/client --platform=node --target=node18 --sourcemap=inline --outfile=../dist/api/index.cjs --metafile=meta.json",
-    "build-main": "esbuild src/index.ts --bundle --external:@prisma/client --platform=node --target=node18 --minify --outfile=../dist/api/index.cjs",
-    "graphql": "ts-node src/handlers/graphql/devServer.ts",
-    "deploy": "zip -9 ../dist/api.zip ../dist/api/index.cjs && aws lambda update-function-code --function-name ${HANDLER_NAME} --zip-file fileb://../dist/api.zip",
-    "clean": "rm -rf ../dist"
+    "build-development": "esbuild src/index.ts --bundle --platform=node --target=node18 --sourcemap=inline --outfile=index.cjs",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --minify --outfile=index.cjs",
+    "clean": "rm index.cjs"
   },
   "dependencies": {
-    "@aws-sdk/types": "^3.310.0",
-    "@prisma/client": "^4.13.0",
-    "@types/aws-lambda": "^8.10.114",
-    "@types/node": "^18.15.13",
-    "@types/nodemailer": "^6.4.7",
-    "esbuild": "^0.17.18",
-    "graphql": "^16.6.0",
-    "jose": "^4.14.1",
-    "nodemailer": "^6.9.1",
-    "zod": "^3.21.4"
+    "esbuild": "0.19.x",
+    "graphql": "16.8.x",
+    "kysely": "0.26.x",
+    "mysql2": "3.6.x",
+    "zod": "3.22.x"
   },
   "devDependencies": {
-    "graphql-yoga": "^3.9.1",
-    "prisma": "^4.13.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4"
+    "@aws-sdk/types": "3.x",
+    "@types/aws-lambda": "8.x",
+    "@types/node": "18.x",
+    "graphql-yoga": "4.x",
+    "kysely-codegen": "0.x",
+    "ts-node": "10.x",
+    "typescript": "5.x"
   }
 }

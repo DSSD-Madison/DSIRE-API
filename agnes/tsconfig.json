@@ -1,10 +1,8 @@
 {
     "compilerOptions": {
-        "strict": true,
         "forceConsistentCasingInFileNames": true,
-        // "noImplicitAny": true,
-
         "moduleResolution": "node",
-        "esModuleInterop": true
+        "noImplicitAny": true,
+        "strict": true
     }
 }

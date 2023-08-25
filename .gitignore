@@ -1,11 +1,8 @@
-*.pem
-meta.json
+# Ignore the AWS RDS global certificate bundle
+global-bundle.pem
 
-graphiql.js
-graphiql.css
-
-dist/api
-dist/frontend/styles
+# Ignore any distribution build paths
+**/dist/**
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,node

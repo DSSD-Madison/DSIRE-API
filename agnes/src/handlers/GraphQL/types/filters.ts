@@ -9,7 +9,6 @@ import {
   GraphQLString as QLString,
   GraphQLBoolean as QLBoolean
 } from "graphql"
-import {Prisma} from "@prisma/client"
 import {z} from "zod"
 
 import {ProgramCategoryId, ProgramCategoryId_t} from "./program"
@@ -391,7 +390,7 @@ export const ProgramFilter = new QLInputObject({
       type: StringFilter,
       description: "Restricts programs based on their eligible technologies."
     },
-    
+
     state: {
       type: StateFilter,
       description: "Restricts programs based on the states that implement them."

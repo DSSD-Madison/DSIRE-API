@@ -1,35 +1,25 @@
 import {APIGatewayEvent, APIGatewayProxyHandler, APIGatewayProxyResult} from "aws-lambda"
 
-import * as handlers from "./handlers/handlers";
+import * as handlers from "./handlers";
+import * as headers from "./headers";
 
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
 
-    if (event.httpMethod == "OPTIONS") return {
+    if (event.httpMethod === "OPTIONS") return {
         headers: {
-            // TODO static URL
-            "Access-Control-Allow-Origin": `https://dsire-api-hosting.s3.amazonaws.com`,
-            "Access-Control-Allow-Methods": "OPTIONS, GET, POST",
-            "Access-Control-Allow-Headers" : "content-type"
+            ...headers.cors
         },
         statusCode: 200,
         body: ""
     }
 
-    const requestPath = '/' + event.path.split('/').slice(1).join('/');
-    switch(requestPath) {
+    // /api/graphql/hello/world
+    const requestPath = '/' + event.path.split('/').slice(2).join('/');
+    switch (requestPath) {
 
-        case "/graphql":
-            return handlers.graphql(event);
-
-        case "/register":
-            return handlers.register(event);
-
-        case "/register/verify":
-            return handlers.verify(event)
-
-        case "/register/approve":
-            return handlers.approve(event)
+        // case "/graphql":
+        //     return handlers.graphql(event);
 
         default:
             return {
