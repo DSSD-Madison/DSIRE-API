@@ -21,7 +21,7 @@ Parameters:
     Type: String
     Description: >-
       The name of the handler is used to associate it with a corresponding
-      stage on the API Gateway (https://root-url.com/${Name}/...) and to fill
+      stage on the API Gateway (https://apigateway-url.com/Name/...) and to fill
       some friendly naming.
     AllowedPattern: "[a-zA-Z0-9-]+"
 

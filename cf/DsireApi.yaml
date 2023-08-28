@@ -29,13 +29,13 @@ Parameters:
   GraphQLPathPart:
     Type: String
     Default: graphql
-    Description: The path component for the GraphQL API (https://root-url.com/${Name}/api/${GraphQLPathPart}/...)
+    Description: The path component for the GraphQL API (https://apigateway-url.com/Name/api/GraphQLPathPart/...)
     AllowedPattern: "[a-zA-Z0-9-]+"
 
   VerificationPathPart:
     Type: String
     Default: verification
-    Description: The path component for the verification API (https://root-url.com/${Name}/api/${VerificationPathPart}/...)
+    Description: The path component for the verification API (https://apigateway-url.com/Name/api/VerificationPathPart/...)
     AllowedPattern: "[a-zA-Z0-9-]+"
 
 
@@ -46,7 +46,7 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: DsireApi
-      Description: Proxied two-stage edge gateway for the DSIRE API
+      Description: Proxied edge gateway for the DSIRE API
       EndpointConfiguration:
         Types:
           - EDGE
