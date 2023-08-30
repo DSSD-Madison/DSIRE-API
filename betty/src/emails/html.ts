@@ -1,1 +1,6 @@
-export default (strings: any, ...values: any): string => String.raw({raw: strings}, ...values);
+export default (strings: TemplateStringsArray, ...values: unknown[]): string =>
+`<!DOCTYPE html>
+<html>
+    ${String.raw({raw: strings}, ...values)}
+</html>
+`
