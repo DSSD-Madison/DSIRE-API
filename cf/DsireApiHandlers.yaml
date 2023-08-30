@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Creates Lambda handlers for Agnes & Betty and deploys them on a
-  DSIRE API gateway stage
+  Lambda handlers for Agnes & Betty with a DSIRE API gateway deployment/stage
 
 
 

@@ -87,47 +87,54 @@ point. `git switch old-automated` to view how this was accomplished.*
 
 #### Bootstrapping GitHub Actions
 
-- Deploy `GitHubActionsCD`. This creates an IAM role
+1. Deploy `GitHubActionsCD`. This creates an IAM role
   *(GitHubActionsCD/GitHubActionsRole)* which will be assumed by GitHub Actions
   via OIDC during CD workflows.
 
 #### Deploying the API Infrastructure*
 
-- Deploy `DsireApi`, optionally configuring the API's endpoints according to the
+1. Deploy `DsireApi`, optionally configuring the API's endpoints according to the
   parameters.
 
 #### Deploying Production Handlers*
 
-- Deploy `DsireApiHandlers` and set the parameter `Name` to `main`. These are
-  the handlers which will receive packages from the GitHub Actions deployments.  
-  To retrieve the staged (query) URL for the production API, navigate to [API
-  Gateway][1], select `DsireApi`, select **Stages** in the leftmost navigation
-  panel, and select `main` from the navigation panel which appears to the right.
-  The staged URL appears next to the heading **Invoke URL**. This is the URL all
-  documentation is assumed to be prefixed with and should be distributed to
-  customers or proxied to another URL.
+1. Deploy `DsireApiHandlers` and set the parameter `Name` to `main`. These are
+   the handlers which will receive packages from the GitHub Actions deployments.  
+   To retrieve the staged (query) URL for the production API, navigate to [API
+   Gateway][1], select `DsireApi`, select **Stages** in the leftmost navigation
+   panel, and select `main` from the navigation panel which appears to the right.
+   The staged URL appears next to the heading **Invoke URL**. This is the URL all
+   documentation is assumed to be prefixed with and should be distributed to
+   customers or proxied to another URL.
 
   [1]: https://us-east-1.console.aws.amazon.com/apigateway/main/apis?region=us-east-1 "API Gateway on us-east-1"
 
 
 ### Deploying for Testing During Development*
 
-- Deploy an additional instance of `DsireApiHandlers` and set the parameter
+1. Ensure the following dependencies (`PATH` binaries) are available in your
+   shell:
+   - AWS CLI V2 (aws)
+   - Zip (zip)
+2. Deploy an additional instance of `DsireApiHandlers` and set the parameter
   `Name` to anything valid other than `main`. Set the variable
   `DSIRE_API_DEPLOY_STAGE` in your shell environment to the same value.  
-  That `Name` will be the stage used to query your testing deployment--retrieve
-  its staged URL as described in [Deploying Production
-  Handlers](#deploying-production-handlers), selecting the `Name` you chose
-  instead of `main` under **Stages**, or replace `main` in the URL from above
-  with the value of `Name` you selected.
-- [Confiure][2] the AWS CLI for your AWS cloud.
-- With working directory `agnes/` or `betty/`, execute either `npm run build` or
-  `npm run build-dev` as desired for your deployment, followed by `npm run
-  deploy`. Either Agnes or Betty will be updated with a package containing your
-  version of their handler.
-- When finished testing, delete your deployment of `DsireApiHandlers`. Some
-  deployment artifacts may be left in AWS-generated S3 buckets, which can be
-  removed as desired.
+   That `Name` will be the stage used to query your testing deployment--retrieve
+   its staged URL as described in [Deploying Production
+   Handlers](#deploying-production-handlers), selecting the `Name` you chose
+   instead of `main` under **Stages**, or replace `main` in the URL from above
+   with the value of `Name` you selected.
+3. [Confiure][2] the AWS CLI for your AWS cloud.
+4. With working directory `agnes/` or `betty/`, execute either `npm run build`
+   or `npm run build-dev` as desired for your deployment, followed by `npm run
+   package` and `npm run deploy`. Either Agnes or Betty will be updated with a
+   package containing your version of their handler. Note that quick edits may
+   be made directly in the AWS Console, if you don't mind scrolling past the
+   bundler emissions :)
+5. Copy over necessary environment variables from the production handlers.
+6. When finished testing, delete your deployment of `DsireApiHandlers`. Some
+   deployment artifacts may be left in AWS-generated S3 buckets, which can be
+   removed as desired.
 
 [2]: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html "Set up the AWS CLI"
 

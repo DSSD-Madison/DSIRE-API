@@ -11,9 +11,11 @@
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
     "really-check": "tsc -p tsconfig.json --noEmit --noErrorTruncation",
-    "build-development": "esbuild src/index.ts --bundle --platform=node --target=node18 --sourcemap=inline --outfile=index.cjs",
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --minify --outfile=index.cjs",
-    "clean": "rm index.cjs"
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --minify --outfile=dist/index.cjs",
+    "build-development": "esbuild src/index.ts --bundle --platform=node --target=node18 --sourcemap=inline --outfile=dist/index.cjs",
+    "package": "zip -9 -j dist/agnes.zip dist/index.cjs",
+    "deploy": "aws lambda update-function-code --function-name=\"DsireApi-Agnes-${DSIRE_API_DEPLOY_STAGE}\" --zip-file 'fileb://dist/agnes.zip'",
+    "clean": "rm -r dist"
   },
   "dependencies": {
     "esbuild": "0.19.x",

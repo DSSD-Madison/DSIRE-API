@@ -48,13 +48,13 @@ jobs:
 
       - name: Zip package for Agnes
         working-directory: ${{ env.WD }}
-        run: zip -9 agnes.zip index.cjs
+        run: zip -9 -j dist/agnes.zip dist/index.cjs
 
-      - name: Upload Agnes package as artifact
+      - name: Upload Agnes' package as artifact
         uses: actions/upload-artifact@v3
         with:
           name: agnes
-          path: ${{ env.WD }}/agnes.zip
+          path: ${{ env.WD }}/dist/agnes.zip
 
   deploy-agnes:
       name: Deploy Agnes on Lambda
@@ -64,7 +64,7 @@ jobs:
         - build-agnes
 
       steps:
-        - name: Download API package as artifact
+        - name: Download Agnes' package as artifact
           uses: actions/download-artifact@v3
           with:
             name: agnes

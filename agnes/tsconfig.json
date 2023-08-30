@@ -1,8 +1,10 @@
 {
     "compilerOptions": {
-        "forceConsistentCasingInFileNames": true,
+        "jsx": "react",
+        "module": "CommonJS",
         "moduleResolution": "node",
         "noImplicitAny": true,
-        "strict": true
+        "strict": true,
+        "target": "ES6",
     }
 }
