@@ -158,4 +158,84 @@ be referenced from branch `main`.
 
 #### GraphQL API (Agnes)
 
+[GraphQL](https://graphql.org/) is a query language for APIs. As opposed to a Rest API which has specifically defined query parameters and endpoints, GraphQL provides users greater flexibility to specify the data they would like to be returned. GraphQL is not a storage model or database query language. The graph refers to graph structures defined in the schema, where nodes define objects and edges define relationships between objects. the API traverses and returns
+application data based on the schema definitions, independent of how the data is stored.
+
+For user purposes, the GraphQL API has one endpoint to request information about certain DSIRE incentive programs: `http://apigateway-url.com/STAGE_NAME/api/graphql/`
+
+Since GraphQL parameters are discoverable, the DSIRE GraphQL schema can be queried for details about itself. The `__schema` keyword can be queried to list all types defined in the schema and retrieve details about each:
+
+    {
+        __schema {
+            types {
+                name
+                kind
+                fields {
+                    name
+                }
+            }   
+        }
+    }
+
+Queries are built by specifying fields within fields until only scalars are returned. Scalars are primitives
+such as: `Int`,`Float`,`String`, or `Boolean`.
+
+#### GraphQL API Query Examples
+
+    query MyQuery {
+        programs {
+            data {
+                name
+                websiteurl
+                start_date
+                end_date
+                summary
+            }
+        }
+    }
+
+    query MyQuery {
+        programs {
+            data {
+                name
+                url
+                startDate
+                endDate
+                summary
+                programCategory {
+                  name
+                  id
+                }
+                programType
+                programTechnologies
+                state {
+                  name
+                  id
+                }
+                zips
+            }
+    `   }
+    }
+
+    query MyQuery {
+        programs(where: {programCategory: {id:{equals: FINANICAL_INCENTIVE}}}) {
+            data {
+                name
+            }
+        }
+    }
+
+    {
+        programs(whereAnd: [{name: {contains: "Solar"}}, {name: {contains: "Dakota"}}], whereNot: [{name:{contains:"north"}}]) {
+            data {
+                name
+                programType
+            }
+        }
+    }
+
 #### Verification API (Betty)
+
+##### Verify
+
+`http://apigateway-url.com/STAGE_NAME/api/verification`

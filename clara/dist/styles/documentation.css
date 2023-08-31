@@ -1,0 +1,168 @@
+body
+{
+    background-color: #f1f1f1;
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+    text-align: center;
+}
+
+header
+{
+    background-color: #fff;
+    padding: 15px;
+    box-shadow: 0 0 3px rgb(88, 88, 88);
+}
+
+header li
+{
+    display: inline;
+    padding-left: 45px;
+    font-family: "Noto Sans", sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+header li a
+{
+    color: rgb(88, 88, 88);
+    text-decoration: none;
+    padding: 13px;
+    transition: .3s ease;
+}
+
+header li a:hover
+{
+    color: #c00;
+}
+
+header ul #admin a{
+    color: #fff;
+    background-color: #c00;
+    border-radius: 30px;
+    float: right;
+    position: relative;
+    top: -15px;
+    transition: .3s ease;
+}
+
+header ul #admin a:hover{
+    background-color: lightcoral;
+
+}
+
+header li img{
+    width: 180px;
+    float: left;
+    margin-top: -10px;
+}
+
+.active
+{
+    color: #c00;
+}
+
+.content {
+    height: 800px;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    text-align: start;
+    padding-left: 15px;
+}
+
+.section .contents{
+    align-self: start;
+    padding-left: 20px;
+}
+
+.section h1 {
+    font-family: "Noto Sans", sans-serif;
+    color: rgb(88, 88, 88);
+    margin-block-start: 0.3em;
+    margin-block-end: 0.3em;
+    margin-inline-start: 0.3em;
+    margin-inline-end: 0.3em;
+}
+
+.section p {
+    font-family: "Noto Sans", sans-serif;
+}
+
+.section h3 {
+    font-family: "Noto Sans", sans-serif;
+    color: #c00;
+}
+
+.section h2 {
+    font-family: "Noto Sans", sans-serif;
+}
+
+.section h4 {
+    font-family: "Noto Sans", sans-serif;
+    color: rgb(88, 88, 88);
+    margin-top: 10px;
+    margin-bottom: 10px;
+
+}
+
+.section .code-block-narrow {
+    background-color: white;
+    border-radius: 30px;
+    width: 300px;
+    margin: 10px;
+}
+
+.section .code-block-medium {
+    background-color: white;
+    border-radius: 30px;
+    width: 600px;
+    margin: 10px;
+}
+
+.section .code-block-wide {
+    background-color: white;
+    border-radius: 30px;
+    width: 1000px;
+    margin: 10px;
+}
+
+.section .code-block-extra-wide {
+    background-color: white;
+    border-radius: 30px;
+    width: 1200px;
+    margin: 10px;
+}
+
+.section code {
+    white-space: pre-wrap;
+    width: 100px;
+}
+
+.section h4 code{
+    font-size: 15px;
+    background-color: white;
+    color: #c00;
+    border-radius: 10x;
+    padding: 2px;
+}
+
+.method {
+    color:white;
+    background-color:#c00;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.examples{
+    display:inline-block;
+}
+
+.ex-1 {
+    float: left;
+}
+

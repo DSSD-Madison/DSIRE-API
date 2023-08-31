@@ -7,7 +7,7 @@
     "directory": "frontend/"
   },
   "scripts": {
-    "build-css": "esbuild static/styles/root.css static/styles/registration.css static/styles/demo.css --bundle --minify --outdir=../dist/frontend/styles/",
+    "build-css": "esbuild static/styles/root.css static/styles/registration.css dist/styles/documentation.css --bundle --minify --outdir=../dist/frontend/styles/",
     "build-graphiql": "esbuild src/graphiql.jsx --bundle --minify --outdir=../dist/frontend/scripts/",
     "render": "chmod +x render.sh; ./render.sh",
     "deploy": "aws s3 sync --size-only --delete ../dist/frontend/ s3://${HOSTING_BUCKET}/$(git rev-parse --abbrev-ref HEAD | sed 's~refs/heads/~~g; s~\\.~-~g; s~_~-~g; s~/~-~g')/",

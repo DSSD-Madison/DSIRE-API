@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link type="text/css" rel="stylesheet" href="../styles/documentation.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=PT+Sans:wght@700&display=swap">
+
+    <title>DSIRE API Documentation</title>
+</head>
+
+<body>
+    <div class="wrapper-main">
+    <header>
+        <ul>
+            <li><img src="../images/dsire.png" alt="logo"></li>
+            <li><a href="./documentation.html">GRAPHQL DOCUMENTATION</a></li>
+            <li><a href="./demo.html">GRAPHQL DEMO</a></li>
+            <li><a href="../../templates/registration.html">TOKEN REGISTRATION</a></li>
+        </ul>
+    </header>
+    <div id="content">
+        <div class="section">
+            <h1>What is GraphQL?</h1>
+            <div class="contents">
+                <h4>
+                    <a href="https://graphql.org/">GraphQL</a> is a query language for APIs. As opposed to a Rest API 
+                    which has specifically defined query parameters and endpoints, GraphQL provides users greater 
+                    flexibility to specify the data they would like to be returned. GraphQL is not a storage model or
+                    database query language. The graph refers to graph structures defined in the schema, where nodes
+                    define objects and edges define relationships between objects. the API traverses and returns
+                    application data based on the schema definitions, independent of how the data is stored.
+                </h4>
+            </div>
+        </div>
+
+        <div class="section">
+            <h1>QUERY</h1>
+            <div class="contents">
+                <span>
+                    <h2><span class="method">POST</span> /api/graphql: <i style="color:#a9a9a9">Request specific information about DSIRE's incentive programs</i></h2>
+                </span>
+                <h4 style="padding-right: 20px;">DSIRE has one user endpoint:  https://2rsp6p4mya.execute-api.us-east-1.amazonaws.com/main/api/graphql. Since GraphQL parameters are discoverable, the DSIRE
+                    GraphQL schema can be queried for details about itself. The <code>__schema</code> keyword can be queried
+                    to list all types defined in the schema and retrieve details about each:
+                </h4>
+
+                    <div class="code-block-narrow">
+                        <code>
+    {
+        __schema {
+            types {
+                name
+                kind
+                fields {
+                    name
+                }
+            }   
+        }
+    }
+                        </code>
+                    </div>
+
+            <h4>
+                Queries are built by specifying fields within fields until only scalars are returned. Scalars are primitives
+                such as: <code>Int</code>, <code>Float</code>, <code>String</code>, or <code>Boolean</code>.
+            </h4>
+            <h3>GRAPHQL BODY EXAMPLES</h3>
+            <div class="examples">
+            <div class="ex-1">
+                <h4>
+                    GraphQL Query
+                </h4>
+            <div class="code-block-medium">
+                <code>
+    query Query($whereProgram: WhereProgram, $page: PageInput) {
+      program(where: $whereProgram, page: $page) {
+        data {
+          id
+          is_entire_state
+          name
+          start_date
+          end_date
+          summary(first: 16)
+          implementing_sector {
+            id
+            name
+            active
+          }
+        }
+        page {
+          limit
+          offset
+        }
+      }
+    } 
+                </code>
+            </div>
+        </div>
+        <div class="ex-1">
+            <h4>
+                GraphQL Variables
+            </h4>
+            <div class="code-block-medium">
+                <code>
+    {
+      "whereProgram": {
+        "id": {
+          "gt": 200
+        },
+        "name": {
+          "contains": "Property Tax"
+        },
+        "start_date": {
+          "lt": "2010-01-01"
+        },
+        "implementing_sector": {
+          "name": {
+            "notIn": ["State", "Federal"]
+          }
+        }
+      },
+      "page": {
+        "limit": 5,
+        "offset": 0
+      }
+    }
+                </code>
+            </div>
+        </div>
+            </div>
+            <h3>What does it do?</h3>
+            <h4>
+                This GraphQL query is performing a request on the "programs" table of the database. For each <span style="color:#c00">program</span>, the query is requesting the program id, whether it is an entire state program (1 if it is a state program and 0 otherwise), the program name, the program start and end date, the first 16 characters
+                 of the program summary i.e. (first:16), and the implementing sector's id, name, and active state (1 if active and 0 otherwise). Additionally, the query is requesting the result's limit or the number of pages that were grabbed and the result's offset or the page number where the result began. <br><br>
+                This query accepts two GraphQL <a href="https://graphql.org/learn/queries/#variables">variables</a>: <span style="color:#c00">whereProgram</span> and <span style="color:#c00">page</span>. GraphQL variables are used to avoid writing dynamic arguments directly into the query string. For this example, the variable
+                <span style="color:#c00">whereProgram</span> is a <span style="color:#c00">WhereProgram</span> type which can be used to filter the results of the program query to a series of "where" constraints. The variable <span style="color:#c00">page</span> is a <span style="color:#c00">PageInput</span> type which limits the information for a query result.
+                In this query, the <span style="color:#c00">whereProgram</span> variable is restricting the result to programs with ids greater than (gt) 200, names which contain the string "Property Tax", start dates before (less than or lt) January 1st, 2010 (year-month-day), and implementing sectors where the name is neither "State" nor "Federal" i.e. not in the list ["State","Federal"].
+                The <span style="color:#c00">page</span> variable sepcifies the results should skip 0 pages of information (offset) and only read 5 pages of information (limit).
+
+            </h4>
+            </div>
+            <div class="examples">
+                <div class="ex-1">
+                    <h4>
+                        GraphQL Query
+                    </h4>
+                <div class="code-block-medium">
+                    <code>
+        fragment sectorMetadata on ImplementingSector {
+            id
+            name
+            active
+        }
+                          
+        query Query($whereProgram: WhereProgram, $page: PageInput) {
+          program(where: $whereProgram, page: $page) {
+              data {
+                name
+                implementing_sector {
+                    id
+                    name
+                    active
+                }
+              }
+              page {
+                limit
+                offset
+              }
+          }
+          firstSectorQuery: implementing_sector(where: {
+            name: {
+              in: ["State"]
+            }
+          }) {
+            myAliasData: data {
+              ...sectorMetadata
+            }
+            page {
+              limit
+              offset
+            }
+          }
+          secondSectorQuery: implementing_sector(where: {
+            name: {
+              notIn: ["State", "Local"]
+            }
+          }) {
+            myAliasData: data {
+              ...sectorMetadata
+            }
+          }
+        }
+                    </code>
+                </div>
+            </div>
+            <div class="ex-1">
+                <h4>
+                    GraphQL Variables
+                </h4>
+                <div class="code-block-medium">
+                    <code>
+        {
+          "whereProgram": {
+            "id": {
+              "gt": 200
+            },
+            "name": {
+              "contains": "Property Tax"
+            },
+            "start_date": {
+              "lt": "2010-01-01"
+            },
+            "implementing_sector": {
+              "name": {
+                "notIn": ["State", "Federal"]
+              }
+            }
+          },
+          "page": {
+            "limit": 5,
+            "offset": 0
+          }
+        }
+                    </code>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h1>FILTERS</h1>
+            <div class="contents">
+            <h2><span class="method">String Filters</span></h2>
+            <h4>
+                equals: The <code>equals</code> filter can be used to restrict query results to only programs where a <code>string</code> data field equals the specified value.<br>
+                not: The <code>not</code> filter can be used to restrict query results to only programs where a <code>string</code> data field does not equal the specified value.<br>
+                in: The <code>in</code> filter can be used to restrict query results to only programs where a <code>string</code> data field equals one of the strings in the specified list of strings.<br>
+                notIn: The <code>notIn</code> filter can be used to restrict query results to only programs where a <code>string</code> data field does not equal one of the strings in the specified list of strings.<br>
+                lt: The <code>lt</code> filter can be used to restrict query results to only programs where a <code>string</code> data field is alphabetically before the specified string i.e. apple < banana.<br>
+                gt: The <code>gt</code> filter can be used to restrict query results to only programs where a <code>string</code> data field is alphabetically after the specified string i.e. august > apple.<br>
+                contains: The <code>contains</code> filter can be used to restrict query results to only programs where a <code>string</code> data field contains the specified string i.e. North Dakota Solar contains Solar.<br>
+                startsWith: The <code>startsWith</code> filter can be used to restrict query results to only programs where a <code>string</code> data field starts with the specified string i.e North Dakota Solar starts with North.<br>
+                endsWith: The <code>endsWith</code> filter can be used to restrict query results to only programs where a <code>string</code> data field ends with the specified string i.e North Dakota Solar ends with Solar.<br>
+            </h4>
+            <h4>
+                These string filters can be combined in lists using <code>whereAnd</code>, <code>whereOr</code>, and <code>whereNot</code>.
+            </h4>
+            <h3>GRAPHQL BODY EXAMPLES</h3>
+            <div class="examples">
+        <div class="ex-1">
+            <div class="code-block-medium">
+                <code>
+    programs(where: {name: {equals: Energy Efficiency Resource Standard}}) {
+      data {
+        name
+        url
+        summary
+      }
+    }
+                </code>
+            </div>
+        </div>
+        <div class="ex-1">
+            <div class="code-block-wide">
+                <code>
+    {
+        programs(whereAnd: [{name: {contains: "Solar"}}, {name: {contains: "Dakota"}}]) {
+            data {
+                name
+                programType
+            }
+        }
+    }
+                </code>
+            </div>
+        </div>
+        <div class="ex-1">
+            <div class="code-block-wide">
+                <code>
+    {
+        programs(whereAnd: [{name: {contains: "Solar"}}, {name: {contains: "Dakota"}}], whereNot: [{name:{contains:"north"}}]) {
+            data {
+                name
+                programType
+            }
+        }
+    }                      
+                </code>
+            </div>
+        </div>
+        <div class="ex-1">
+            <div class="code-block-medium">
+                <code>
+    {
+        programs(where: {state: {name: {in: ["North Dakota", "South Dakota"]}}}) {
+            data {
+                name
+                programType
+                state {
+                    name
+                }
+            }
+        }
+    }                      
+                </code>
+            </div>
+        </div>
+            </div>
+            <div class="contents">
+                <h2><span class="method">String List Filters</span></h2>
+                <h4>
+                    equals: The <code>equals</code> filter can be used to restrict query results to only programs where a <code>string list</code> data field equals the specified string list.<br>
+                    has: The <code>has</code> filter can be used to restrict query results to only programs where a <code>string list</code> data field contains the specified string.<br>
+                    hasEvery: The <code>hasEvery</code> filter can be used to restrict query results to only programs where a <code>string list</code> data field has every string in the specified list of strings.<br>
+                    hasSome: The <code>hasSome</code> filter can be used to restrict query results to only programs where a <code>string list</code> data field has some of the strings in the specified list of strings.<br>
+                    isEmpty: The <code>isEmpty</code> filter can be used to restrict query results to only programs where a <code>string list</code> data field is empty if the specified boolean is True and not empty if False<br>
+                </h4>
+                <h4>
+                    These string filters can be combined in lists using <code>whereAnd</code>, <code>whereOr</code>, and <code>whereNot</code>.
+                </h4>
+                <h3>GRAPHQL BODY EXAMPLES</h3>
+                <div class="examples">
+                <div class="ex-1">
+                    <div class="code-block-wide">
+                        <code>
+        programs(where: {programTechnologies: {equals: ["Solar - Passive","Solar Water Heat","Solar Space Heat"]}}) {
+          data {
+            name
+          }
+        }
+                        </code>
+                    </div>
+                </div>
+            <div class="ex-1">
+                <div class="code-block-wide">
+                    <code>
+        {
+            programs(where: {programTechnologies: {has: "Solar Water Heat"}}) {
+                data {
+                    name
+                    url
+                    summary
+                }
+            }
+        }
+                    </code>
+                </div>
+            </div>
+            <div class="ex-1">
+                <div class="code-block-extra-wide">
+                    <code>
+        {
+            programs(where: {programTechnologies: {hasEvery: ["Solar - Passive","Solar Water Heat","Solar Space Heat","Solar Thermal Electric",
+            "Solar Thermal Process Heat","Solar Photovoltaics"]}}) {
+                data {
+                    name
+                    programType
+                }
+            }
+        }
+                    </code>
+                </div>
+            </div>
+            <div class="ex-1">
+                <div class="code-block-extra-wide">
+                    <code>
+        {
+            programs(where: {programTechnologies: {hasSome: ["Solar - Passive","Solar Water Heat","Solar Space Heat","Solar Thermal Electric",
+            "Solar Thermal Process Heat","Solar Photovoltaics"]}}) {
+                data {
+                    name
+                    programType
+                }
+            }
+        }                      
+                    </code>
+                </div>
+            </div>
+            <div class="ex-1">
+                <div class="code-block-extra-wide">
+                    <code>
+        {
+            programs(where: {programTechnologies: {isEmpty: False}}) {
+                data {
+                    name
+                    programType
+                }
+            }
+        }                      
+                    </code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
