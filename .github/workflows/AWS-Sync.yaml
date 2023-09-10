@@ -1,0 +1,53 @@
+name: AWS Environment Sync
+run-name: Sync GitHub env with AWS Lambda
+
+on:
+  workflow_dispatch:
+    inputs:
+      FUNCTION_NAME_AGNES:
+        required: true
+        description: The name of the Lambda to receive the GitHub environment
+        default: main
+  push:
+    tags:
+      - v*
+
+# Required for aws-actions/configure-aws-credentials
+permissions:
+  id-token: write
+  contents: read
+
+
+jobs:
+
+  sync-environment:
+    name: Sync env with Lambda
+    runs-on: ubuntu-latest
+    environment: AWS
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_CD_ROLE_ARN }}
+
+      - name: Sync all environment variables with the Lambda environment
+        env:
+          FUNCTION_NAME: ${{ format('{0}-{1}', 'DsireApi-Agnes', github.event.inputs.FUNCTION_NAME_AGNES || 'main') }}
+          DB_DATABASE: ${{ vars.DB_DATABASE }}
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_PORT: ${{ vars.DB_PORT }}
+          DB_USER: ${{ vars.DB_USER }}
+          NODE_OPTIONS: ${{ vars.NODE_OPTIONS }}
+        run: |
+          aws lambda update-function-configuration \
+            --function-name="${FUNCTION_NAME}" \
+            --environment "Variables={DB_DATABASE='${DB_DATABASE}',
+                                      DB_HOST='${DB_HOST}',
+                                      DB_PASSWORD='${DB_PASSWORD}',
+                                      DB_PORT='${DB_PORT}',
+                                      DB_USER='${DB_USER}',
+                                      NODE_OPTIONS='${NODE_OPTIONS}'}" > /dev/null
+          aws lambda wait function-updated --function-name "${FUNCTION_NAME}"
