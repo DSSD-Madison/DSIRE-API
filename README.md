@@ -39,15 +39,17 @@ The request arrives at an API Gateway *(DsireApi/Api)*, which selects the
 correct Lambda handler *(DsireApiHandlers/Agnes)* version for serving the
 request using `STAGE_NAME` and matching stage variables (parameterized at the
 time the handlers are deployed; see [Deploying for Testing During
-Development](#deploying-for-testing-during-development)). The entire request URL
-is proxy-passed to the selected handler *(DsireApi/AgnesProxyResource & DsireApiHandlers/Agnes)*, which
-responds as a GraphQL API. The handler is made a member of the program
-database's VPC to facilitate populating the response. *Internet gateways are
-expensive, so a second handler is thus required to facilitate verification
-humanness/mailing*.
+Development](#deploying-for-testing-during-development)). For Agnes, only the
+`graphql/` endpoint is proxied and handled as a GraphQL API
+*(DsireApi/AgnesResource & DsireApiHandlers/Agnes)*, whereas Betty proxy-passes
+the entire request URL after `verification/`, resolving `/api/verification/...`
+*(DsireApi/BettyProxyResource & DsireApiHandlers/Betty)* as a REST API. The
+handler (Agnes) is made a member of the program database's VPC to facilitate
+populating the response. *Internet gateways are expensive, so a second handler
+is thus required to facilitate verification humanness/mailing*.
 
 #### Betty
-`GET http://apigateway-url.com/STAGE_NAME/api/ENDPOINT/`
+`GET http://apigateway-url.com/STAGE_NAME/api/verification/ENDPOINT/`
 
 The request proceeds as above. The handler, not a member of any VPC, implements
 a simple REST API and userflow for `ENDPOINT` described in [Verification API
@@ -114,8 +116,8 @@ point. `git switch old-automated` to view how this was accomplished.*
 
 1. Ensure the following dependencies (`PATH` binaries) are available in your
    shell:
-   - AWS CLI V2 (aws)
-   - Zip (zip)
+   - AWS CLI 2.x.x (`aws`)
+   - Zip (`zip`)
 2. Deploy an additional instance of `DsireApiHandlers` and set the parameter
   `Name` to anything valid other than `main`. Set the variable
   `DSIRE_API_DEPLOY_STAGE` in your shell environment to the same value.  
@@ -131,7 +133,10 @@ point. `git switch old-automated` to view how this was accomplished.*
    package containing your version of their handler. Note that quick edits may
    be made directly in the AWS Console, if you don't mind scrolling past the
    bundler emissions :)
-5. Copy over necessary environment variables from the production handlers.
+5. Congifure necessary environment variables in Lambda for your use-case, or
+   dispatch the `AWS Environment Sync` GitHub workflow with the value you chose
+   for the parameter `Name` to populate that handler with the production (branch
+   `main`) environment.
 6. When finished testing, delete your deployment of `DsireApiHandlers`. Some
    deployment artifacts may be left in AWS-generated S3 buckets, which can be
    removed as desired.
