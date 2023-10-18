@@ -1,6 +1,6 @@
 export const cors = {
-    // TODO Configure CORS
+    // FIXME Configure CORS
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "OPTIONS, POST",
     "Access-Control-Allow-Headers" : "content-type"
 } as const

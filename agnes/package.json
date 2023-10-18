@@ -1,7 +1,7 @@
 {
   "name": "dsire-api-agnes",
   "description": "GraphQL API Lambda handler for the DSIRE API",
-  "version": "0.0.0-rc0",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/DSSD-Madison/DSIRE-API.git",
@@ -21,16 +21,13 @@
     "esbuild": "0.19.x",
     "graphql": "16.8.x",
     "kysely": "0.26.x",
-    "mysql2": "3.6.x",
-    "zod": "3.22.x"
+    "mysql2": "3.6.x"
   },
   "devDependencies": {
     "@aws-sdk/types": "3.x",
     "@types/aws-lambda": "8.x",
     "@types/node": "18.x",
-    "graphql-yoga": "4.x",
     "kysely-codegen": "0.x",
-    "ts-node": "10.x",
     "typescript": "5.x"
   }
 }

@@ -18,7 +18,7 @@ Parameters:
   SubnetIds:
     Type: CommaDelimitedList
     Default: "subnet-0e968dd68b1557a24"
-      # TODO We want to run in all AZs?
+      # FIXME Select AZs
       # - subnet-00ff385195c1dbdb5
       # - subnet-02563ccf50bd2aba3
       # - subnet-0b828c335bdc547f1
@@ -29,7 +29,7 @@ Parameters:
   GraphQLPathPart:
     Type: String
     Default: graphql
-    Description: The path component for the GraphQL API (https://apigateway-url.com/Name/api/GraphQLPathPart/...)
+    Description: The path component for the GraphQL API (https://apigateway-url.com/Name/api/GraphQLPathPart/)
     AllowedPattern: "[a-zA-Z0-9-]+"
 
   VerificationPathPart:
@@ -59,7 +59,7 @@ Resources:
       ParentId: !GetAtt Api.RootResourceId
       PathPart: "api"
 
-  GraphQLResource:
+  AgnesResource:
     Type: AWS::ApiGateway::Resource
     DependsOn: Api
     Properties:
@@ -75,14 +75,6 @@ Resources:
       ParentId: !GetAtt ApiResource.ResourceId
       PathPart: !Ref VerificationPathPart
 
-  AgnesProxyResource:
-    Type: AWS::ApiGateway::Resource
-    DependsOn: Api
-    Properties:
-      RestApiId: !Ref Api
-      ParentId: !GetAtt GraphQLResource.ResourceId
-      PathPart: "{proxy+}"
-
   BettyProxyResource:
     Type: AWS::ApiGateway::Resource
     DependsOn: Api
@@ -93,12 +85,12 @@ Resources:
 
   AgnesProxyMethod:
     Type: AWS::ApiGateway::Method
-    DependsOn: AgnesProxyResource
+    DependsOn: AgnesResource
     Properties:
       RestApiId: !Ref Api
-      ResourceId: !Ref AgnesProxyResource
+      ResourceId: !Ref AgnesResource
       AuthorizationType: NONE
-      # TODO Lock this down?
+      # TODO Lock this down outside of the Lambda
       HttpMethod: ANY
       Integration:
         Type: AWS_PROXY
@@ -113,11 +105,9 @@ Resources:
       RestApiId: !Ref Api
       ResourceId: !Ref BettyProxyResource
       AuthorizationType: NONE
-      # TODO Lock this down?
       HttpMethod: ANY
       Integration:
         Type: AWS_PROXY
-        # Mandatory for AWS_PROXY/lambda integration
         IntegrationHttpMethod: POST
         Uri: !Join ["", [!Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:", "${stageVariables.betty}", "/invocations"]]
 
